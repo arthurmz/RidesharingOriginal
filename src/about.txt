@@ -1,0 +1,249 @@
+Este algoritmo otimiza o problema do Ridesharing com janelas de tempo.
+Os objetivos são minimizar:
+
+A distância total percorrida pelos veículos.
+O tempo total das viagens dos veículos.
+O tempo total de viagem dos caronas COMBINADOS.
+A quantidade de caronas NÃO COMBINADOS.
+
+
+Para resolver este problema foi desenvolvido um algoritmo genético baseado no NSGA-II
+onde a cada geração é mantida uma população de pais e filhos atualizadas da seguinte forma
+no loop principal:
+
+	Pai = melhores(pai + filha);
+	Filha = crossover_mutaçao(pai);
+
+
+									CROSSOVER
+
+A "complicação" do algoritmo está dentro de crossover_mutação. Para que o algoritmo convirja
+para as melhores soluções possíveis o crossover faz o seguinte (Para a instância RM698_L15):
+
+Cada Indivíduo da população contem 698 rotas, inicialmente varias. As rotas são sequências de
+Services. O service é a informação do que está acontecendo em um determinado ponto (latitude e longitude)
+do mapa. Dentro de Service temos os requests que é a informação do veículo ou do carona;
+
+Exemplo de uma rota:
+
+	A+ 1+ 1- 2+ 3+ 3- 2- A-
+
+Cada caracter representa um service. A+ e A- são services diferentes para o mesmo REQUEST (A).
+
+Voltando à questão da rota. Na inicialização da primeira população, cada rota recebe dois services
+contendo um veículo do "grafo" (que não é um grafo de verdade, é a estrutura que guarda as informações
+de requests do problema). A inicialização se parece com isto:
+	A+ A-
+	
+O ideal é que o veículo seja alocado no seu EARLIEST PICKUP TIME e EARLIEST DEPARTURE TIME. Assim como 
+as novas inserções de caronas. Isto porquê maximizamos a chance de fazer um PUSH_FORWARD ao inserir um novo
+carona e esta rota se manter válida.
+O PUSH_FORWARD é o ato de incrementar os tempos de pickup e delivery dos pontos APÓS o ponto de inserção desejado.
+
+O crossover então pega dois indivíduos, escolhe um ponto de corte aleatório e realiza a permutação dos pedaços
+entre um indivíduo e outro. É difícil imaginar um cenário onde a saída do crossover seja um indivíduo melhor do que 
+seus pais pois com uma grande quantidade de caronas combinados a chance de obter um indivíduo inválido é bem maior.
+
+É nebuloso o benefício do crossover, mas de toda forma, ao gerar um indivíduo inválido, o operador de reparação
+promove um melhoramento do indivíduo. A reparação tenta inserir tantos novos caronas quanto possível 
+em pontos aleatórios. Seria interessante testar o algoritmo sem o crossover.
+
+Na verdade o benefício do crossover é quebrar o indivíduo (retirar algumas caronas pra abrir espaço pra outras)
+De forma a manter a aparência dos pais.
+
+Uma observação: Na instância RM698_L15 os veículos estão ordenados da maior distância pra menor. Como o crossover
+sempre preserva as rotas que estão ACIMA do ponto de corte, parece menos provável que os primeiros veículos
+serão alterados pelo operador de reparação. 
+
+
+
+
+									INICIALIZAÇÃO DOS MATCHABLE_RIDERS
+									
+No início do algoritmo precisamos verificar quais riders podem ser combinados com quais veículos.
+Essa lista otimiza o operador de reparação e o de mutação. já que a busca por novas inserções se restringe à
+lista de riders cada veículo e não a todo espaço de riders.
+
+Essa verificação tem que ser feita da seguinte forma. consideremos as janelas de tempo de um veículo e um carona:
+
+Veículo		|----------|                |---------|
+Carona		        |------|        |------|
+Este caso está ok, as janelas de tempo se sobrepõem.
+
+Veículo		|----------|                |---------|
+Carona		        |------|                        |------|
+Este caso não. A janela de delivery do carona está fora da janela do veículo:
+
+Veículo		|----------|                |---------|
+Carona		        |------|    |------|
+Este caso também vale.
+
+Veículo		|----------|                |---------|
+Carona	 |------|                             |------|
+Este caso também vale!
+
+Para as janelas de tempo sere válidas tempos de que ter:
+
+LATEST PICKUP TIMEc >= EARLIEST PICKUP TIMEi
+EARLIEST DELIVERY TIMEc <= LATEST DELIVERY TIMEi
+
+Ok, definimos as validações da janela de tempo. Mas e o máximo de detour do veículo?
+
+		V+           V-
+		 \         /
+		  \C+---C-/
+
+Distância D = (C-,V-)
+Distância D2 = (V+,C+)
+Distância D3 = (C+,C-);
+
+LatestInserçãoCarona = LatestDeliveryTIMEv - D;
+EarliestInserçãoCarona = EarliestDeliveryTIMEV - D;
+EarliestPickupInserçãoCarona = EarliestPickupTIMEv + D2;
+LatestPickupInsarçãoCarona = LatestPickupTIMEv + D2;
+
+Essas quatro variáveis são a janela de inserção de pickup e delivery do carona que o veículo de fato pode atender
+(levando em conta o tempo que leva pra chegar no carona).
+Isto é, o earliest, latest pickup time e earliest latest delivery time que o veículo pode atender o carona.
+
+Desta janela de inserção, deduzimos a janela REAL onde cada um pode ser atendido:
+O earliest pickup time em que o veículo PODE atender o carona e que o carona PODE ser atendido. (M)
+O latest pickup time em que o veículo PODE atender o carona e que o carona PODE ser atendido. (N)
+O earliest delivery time em que o veículo PODE atender o carona e que o carona PODE ser atendido. (O)
+O latest delivery time em que o veículo PODE atender o carona e que o carona PODE ser atendido. (P)
+
+
+	Veículo 					A|--------|B             			 C|-----------|D
+								 \         \             			 /           /
+	Janela de inserção   	      E|--------|F          			G|----------|H
+	Janela do carona          I|---------|J                    K|-----------|L
+	Janela real                   M|-----|N                    		O|------|P
+
+
+					     Verificando se dá pra fazer a inserção;
+					     
+if (J < E || K  >  H)
+	CARONA INVÁLIDA!, nem calcula a janela real;
+	
+calcula_janela_real;
+if (N < M || P < O)
+	CARONA INVÁLIDA!
+	
+pickup = M
+delivery = M + D3;
+if (delivery > P)
+	CARONA INVÁLIDA!
+if (delivery < O){
+	MAXeXTRAtIME = 0.3 * D3;
+	
+	if (delivery + MAXeXTRAtIME >= O){
+		delivery = O;
+		CARONA VÁLIDA!
+	}
+	else{
+		delivery = O;
+		pickup = delivery + MAXeXTRAtIME - D3;
+		if (pickup > N)
+			CARONA INVÁLIDA!
+	}
+}
+
+Se chegou a qui, a carona é válida e seus valores de pickup e delivery mais cedo possíveis são
+pickup e delivery;
+Esse cenário funciona perfeitamente bem pra inserção de caronas em rotas vazias.
+
+
+Aee, vamos lá. Uma outra forma de verificar essas janelas de tempo é calcular
+a hora de
+
+
+
+
+
+
+									A INSERÇÃO DE UMA CARONA ALEATÓRIA
+									
+Atualmente, a inserção de carona aleatória pega uma rota aleatória, e pra essa rota insere
+o máximo de caronas aleatórias da sua lista de caronas combináveis.
+O algoritmo faz o seguinte:
+Insere o carona desejado no ponto escolhido;
+Insere o ponto de delivery exatamente depois;
+Calcula os tempos de pickup e delivery de toda a rota, pra verificar a validade;
+
+Neste calculo, o motorista recebe o service_time = earliest pickup time;
+O problema disto é que se um carona pode ser inserido mas seus tempos de pickup e delivery
+devem ser diferentes do mais cedo possível, então a rota se torna inválida.
+Na verdade na verdade, tinha um erro no cálculo dos tempos. Com a correção, cada nova carona
+ganha seu pickup time = max(pickups time das duas janelas de tempo motorista e carona).
+Com essa correção, é garantido que a inserção de um unico carona encaixável no motorista será encaixada.
+
+Mas quanto temos vários caronas, a inserção de uma nova carona provoca o recálculo dos tempos de todos
+o que quebra o objetivo da mutação. De empurrar os tempos de pickup de algums caronas pra frente ou pra trás.
+
+A questão é que essa mutação pode ser inútil se a gente puder verificar rapidamente uma configuração onde
+eu posso inserir o carona no ponto desejado. Assim o algoritmo se apoia apenas na aleatoridade do ponto de inserção
+do carona e não em esperar que uma mutação DE PUSH FORWARD OU PUSH BACKWARD abra espaço pra encaixar outro carona.
+
+A solução então seria que o diferencial desse algoritmo é não usar push forward ou push backward. mas determinar
+/deterministicamente/ um push forward ou um push backward mínimo necessário para os caronas antes e 
+depois do ponto de inserção que permitem que o ponto seja válido.
+
+Ainda assim, meu método update_times está errado. pois faz o calculo para a rota sequencialmente. Sem considerar 
+a manutenção de uma configuração anterior. Seria um problema de /programação dinâmica/? Onde os caronas
+vão se encaixando na rota, e meu trabalho é determinar um esticamento nos tempos pra encaixar a nova carona?
+
+Assim, duas soluções se diferenciam apenas pela ordenação de inserção dos caronas.
+
+							ENFIM!!
+O algoritmo da inserção de caronas vai ficar da seguinte forma.
+A inserção é realizada num ponto aleatório, como esperado. então o ponto de delivery começa como o próximo seguinte,
+se não servir então é incrementando. assim por diante até a penultima posição.
+
+Em cada uma dessas posições do delivery, é feito o cálculo dos tempos numa rota COPIADA. assim se não funcionar
+a rota original estará intacta. O cálculo dos tempos verifica a hora mais cedo em que o ponto k pode ser inserido
+levando em conta tanto a janela de tempo do ponto de inserção k com o ponto k-1 como a janela de tempo do ponto
+k+1 com o ponto k+2. Isto é feito da seguinte forma:
+
+No caso base, só temos o motorista e um carona a inserir. A janela de tempo fica assim
+
+Motori   A|----------|B                        C|-----------|D
+Carona        E|----------|F                         G|---------|H
+
+
+o service time vai ser o máximo entre A e E (E). e o máximo entre isto e o cálculo de tras pra frente:
+[máximo entre C e G - tempo entre o source e o destiny do request Carona]
+Assim, de repente o ponto de pickup pode acabar um pouco depois de E.
+
+A outra situação mais complicada é quando já temos um carona na rota: M+ C1+ C1- M-
+
+Motoris   A|----------|B                                  C|-----------|D
+Carona1           E|----------|F       G|---------|H
+carona2         |---------------|               |-------------|
+
+Se desejarmos a rota M+ C2+ C2- C1+ C1- M- a situação é análoga a anterior. Mas neste caso 
+temos que prestar atenção no seguinte: M+ já tem seu service time definido, então o push forward vai ser feito do
+C2+ pra frente.
+
+
+
+
+
+		  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
