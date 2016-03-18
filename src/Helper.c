@@ -10,28 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-/*Aloca um novo Fronts na memória, de tamanho max_capacity
- * Cada elemento de list é um ponteiro pra uma população que é alocada
- * Cada população guarda uma lista de ponteiros pros Individuos
- * Os indivíduos não são alocados*/
-Fronts* new_front_list(int max_capacity){
-	Fronts* f = (Fronts*) calloc(1, sizeof(Fronts));
-	f->size = 0;
-	f->max_capacity = max_capacity;
-	f->list = (Population**) calloc(max_capacity, sizeof(Population*));
-	for (int i = 0; i < max_capacity; i++){
-		f->list[i] = calloc(1, sizeof(Population));
-		Population *fronti = f->list[i];
-		fronti->id_front = 0;
-		fronti->size = 0;
-		fronti->max_capacity = max_capacity;
-		fronti->list = calloc(max_capacity, sizeof(Individuo));
-	}
-	return f;
-}
-
-
 /*TESTADO OK*/
 Individuo * new_individuo(int drivers_qtd, int riders_qtd){
 	Individuo *ind = calloc(1, sizeof(Individuo));

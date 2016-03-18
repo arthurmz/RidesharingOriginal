@@ -5,13 +5,15 @@
  *      Author: arthur
  */
 
+
+
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "Helper.h"
-#include "NSGAII.h"
 #include "Calculations.h"
+#include "GenerationalGA.h"
 
 
 Rota *ROTA_CLONE;
@@ -33,92 +35,6 @@ void add_Individuo_front(Fronts * fronts, Individuo *p){
 	
 	fronti->list[fronti->size] = p;
 	fronti->size++;
-}
-
-/*Verifica se A domina B (melhor em pelo menos 1 obj)*/
-bool dominates(Individuo *a, Individuo *b){
-	bool smaller_found = false;
-	for (int i = 0; i < QTD_OBJECTIVES; i++){
-		if (a->objetivos[i] < b->objetivos[i])
-			smaller_found = true;
-		if (a->objetivos[i] > b->objetivos[i])
-			return false;
-	}
-	return smaller_found;
-}
-
-void add_dominated(Individuo *a, Individuo *b){
-	if (a->dominates_list == NULL){
-		a->dominates_list = malloc(32* sizeof(Individuo*));
-		a->dominates_list_capacity = 32;
-	}
-
-	if (a->dominates_list_capacity <= a->dominates_list_count){
-		a->dominates_list_capacity += 32;
-		Individuo **temp = realloc(a->dominates_list, a->dominates_list_capacity * sizeof(Individuo*));
-		if (temp != NULL) a->dominates_list = temp;
-	}
-	a->dominates_list[a->dominates_list_count] = b;
-	a->dominates_list_count++;
-
-}
-
-/*Ordena os indivíduos segundo o critério de não dominação*/
-void fast_nondominated_sort(Population *population, Fronts * fronts){
-	/*====================Zerando o frontlist==================================*/
-	for (int i = 0; i < fronts->size; i++){
-		fronts->list[i]->size = 0;
-	}
-	fronts->size = 0;
-
-	/*===================Zerando o dominated counts============================*/
-	for (int i = 0; i < population->size; i++){
-		population->list[i]->dominated_by_count = 0;
-		population->list[i]->dominates_list_count = 0;
-	}
-	
-	//Primeiro passo, computando as dominancias
-	for (int i = 0; i < population->size; i++){
-		Individuo *a = population->list[i];
-		for (int j = 0; j < population->size; j++){
-			if (i == j) continue;
-			Individuo *b = population->list[j];
-			if (dominates(a,b)){
-				add_dominated(a, b);
-			}
-			else if (dominates(b,a)){
-				a->dominated_by_count++;
-			}
-		}
-		if (a->dominated_by_count == 0){
-			a->rank = 0;
-			add_Individuo_front(fronts, a);
-		}
-	}
-	
-	int index_front = 0;
-	//Iterando enquanto existirem novos fronts
-	while (index_front < fronts->size){
-		Population * front_i = fronts->list[index_front];
-		//Iterando sobre os elementos do front index_front
-		for (int i = 0; i < front_i->size; i++){
-			Individuo *p = front_i->list[i];
-
-			for (int k = 0; k < p->dominates_list_count; k++){
-				Individuo *indv_dominated = p->dominates_list[k];
-				if (indv_dominated->dominated_by_count > 0){
-					indv_dominated->dominated_by_count--;
-				}
-				if (indv_dominated->dominated_by_count == 0){
-					indv_dominated->rank = index_front+1;
-					add_Individuo_front(fronts, indv_dominated);
-					indv_dominated->dominated_by_count = -1;//Evita que o mesmo idv seja re-add em outras iteracoes
-					//count_reps++;
-				}
-			}
-		}
-		index_front++;
-	}
 }
 
 /*Pra poder usar a função qsort com N objetivos,
@@ -206,35 +122,6 @@ void sort_by_objective(Population *pop, int obj){
 	}
 }
 
-
-/*Deve ser chamado depois de determinar as funções objetivo*/
-void crowding_distance_assignment(Population *pop){
-	for (int i = 0; i < pop->size; i++){
-		pop->list[i]->crowding_distance = 0;
-	}
-	for (int k = 0; k < QTD_OBJECTIVES; k++){
-
-		sort_by_objective(pop, k);
-
-		pop->list[0]->crowding_distance = FLT_MAX;
-		pop->list[pop->size -1]->crowding_distance = FLT_MAX;
-
-		float obj_min = pop->list[0]->objetivos[k];//valor min do obj k
-		float obj_max = pop->list[pop->size -1]->objetivos[k];//valor max do obj k
-
-		float diff = fmax(0.0001, obj_max - obj_min);
-
-		for (int z = 1; z < pop->size -1; z++){
-			float prox_obj = pop->list[z+1]->objetivos[k];
-			float ant_obj = pop->list[z-1]->objetivos[k];
-
-			if (pop->list[z]->crowding_distance != FLT_MAX)
-				pop->list[z]->crowding_distance += (prox_obj - ant_obj) / diff;
-		}
-
-	}
-}
-
 /*Pra poder usar a função qsort com N objetivos,
  * precisamos implementar os n algoritmos de compare*/
 int compareByCrowdingDistanceMax(const void *p, const void *q) {
@@ -250,17 +137,9 @@ int compareByCrowdingDistanceMax(const void *p, const void *q) {
     return ret;
 }
 
-
-
-void sort_by_crowding_distance_assignment(Population *front){
-	//crowding_distance_assignment(front); //jah eh feito antes
-	qsort(front->list, front->size, sizeof(Individuo*), compareByCrowdingDistanceMax );
-}
-
 bool crowded_comparison_operator(Individuo *a, Individuo *b){
 	return (a->rank < b->rank || (a->rank == b->rank && a->crowding_distance > b->crowding_distance));
 }
-
 
 
 /*Tenta empurar os services uma certa quantidade de tempo*/
@@ -268,11 +147,13 @@ bool push_forward(Rota * rota, int position, double pf){
 	for (int i = position; i < rota->length; i++){
 		if (pf == 0) return true;
 		Service * svc = &rota->list[i];
+		Service * ant = &rota->list[i-1];
 		double at = get_earliest_time_service(svc);
 		double bt = get_latest_time_service(svc);
 
-		double waiting_time = haversine(&rota->list[i-1], svc);
-		pf -= waiting_time;
+		double waiting_time = svc->service_time - ant->service_time - haversine(ant, svc);
+		if (waiting_time > 0)
+			pf -= waiting_time;
 		if (pf < 0)
 			pf = 0;
 		double new_st = rota->list[i].service_time + pf;
@@ -546,7 +427,7 @@ void insere_carona_aleatoria_rota(Graph *g, Rota* rota){
 	Request * request = &g->request_list[rota->id];
 
 	int qtd_caronas_inserir = request->matchable_riders;
-	if (qtd_caronas_inserir - (rota->length-2) == 0) return;
+	if (qtd_caronas_inserir == 0) return;
 	/*Configurando o index_array usado na aleatorização
 	 * da ordem de leitura dos caronas*/
 	for (int l = 0; l < qtd_caronas_inserir; l++){
@@ -565,77 +446,6 @@ void insere_carona_aleatoria_rota(Graph *g, Rota* rota){
 	}
 }
 
-
-/*Pega os melhores N indivíduos do frontList e joga na população pai.
- * Os restantes vão pra população filho.
- * Remove da lista de pais e filhos as listas de dominação
- * "esvazia" o frontsList
- * */
-void select_parents_by_rank(Fronts *frontsList, Population *parents, Population *offsprings, Graph *g){
-	int lastPosition = 0;
-	parents->size = 0;
-	offsprings->size = 0;
-
-
-	/*Para cada um dos fronts, enquanto a qtd de elementos dele couber inteiramente em parents, vai adicionando
-	 * Caso contrário para. pois daí pra frente, só algums desses indivíduos irão para o parent
-	 * o restante desse front em lastPosition e dos próximos fronts vão pro offsprings*/
-	for (int i = 0; i < frontsList->size; i++){
-		Population * front_i = frontsList->list[i];
-		lastPosition = i;
-		crowding_distance_assignment(front_i);
-		if (parents->max_capacity - parents->size >= front_i->size){
-			for (int j = 0; j < front_i->size; j++){
-				parents->list[parents->size++] = front_i->list[j];
-			}
-		}
-		else{
-			break;
-		}
-	}
-
-	int restantes_adicionar = parents->max_capacity - parents->size;//Qtd que tem que adicionar aos pais
-
-	//Se restantes_adicionar > 0 então o front atual não comporta todos os elementos de parent
-	if (restantes_adicionar > 0){
-		sort_by_crowding_distance_assignment(frontsList->list[lastPosition]);//ordena
-		for (int k = 0; k < restantes_adicionar; k++){
-			parents->list[parents->size++] = frontsList->list[lastPosition]->list[k];//Adiciona o restante aos pais
-		}
-		//Inserindo no filho o restante desses indivíduos que não couberam nos pais
-		for (int k = restantes_adicionar; k < frontsList->list[lastPosition]->size; k++){
-			offsprings->list[offsprings->size++] = frontsList->list[lastPosition]->list[k];
-		}
-		lastPosition++;
-	}
-
-
-	/*Adicionar todos os restantes de bigpopulation aos filhos*/
-	while (lastPosition < frontsList->size){
-		for (int k = 0; k < frontsList->list[lastPosition]->size; k++){
-			offsprings->list[offsprings->size] = frontsList->list[lastPosition]->list[k];
-			offsprings->size++;
-		}
-		lastPosition++;
-	}
-}
-
-/*Copia o conteúdo das duas populações na terceira.
- * é uma cópia simples, onde assume-se que os indivíduos estão na heap
- * "esvazia" p1 e p2*/
-void merge(Population *p1, Population *p2, Population *big_population){
-	big_population->size = 0;//Zera o bigpopulation
-
-	for (int i = 0; i < p1->size + p2->size; i++){
-		if (i < p1->size){
-			big_population->list[i] = p1->list[i];
-		}
-		else{
-			big_population->list[i] = p2->list[i - p1->size];
-		}
-	}
-	big_population->size = p1->size + p2->size;
-}
 
 /*seleção por torneio, k = 2*/
 Individuo * tournamentSelection(Population * parents){
@@ -781,8 +591,6 @@ void mutation(Individuo *ind, Graph *g, float mutationProbability){
 
 /*Gera uma população de filhos, usando seleção, crossover e mutação*/
 void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, float crossoverProbability, float mutationProbability){
-
-
 	offspring->size = 0;//Tamanho = 0, mas considera todos já alocados
 	int i = 0;
 	while (offspring->size < parents->size){

@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include "Helper.h"
-#include "NSGAII.h"
 #include "Calculations.h"
+#include "GenerationalGA.h"
 
 
 //Inicializa vetores globais úteis

@@ -8,7 +8,7 @@
 #ifndef CALCULATIONS_H_
 #define CALCULATIONS_H_
 
-#include "NSGAII.h"
+#include "GenerationalGA.h"
 
 double distancia_percorrida(Rota * rota);
 double haversine(Service *a, Service *b);

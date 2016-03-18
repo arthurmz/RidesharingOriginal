@@ -5,8 +5,8 @@
  *      Author: arthur
  */
 
-#ifndef NSGAII_H_
-#define NSGAII_H_
+#ifndef GENERATIONALGA_H_
+#define GENERATIONALGA_H_
 
 #include <stdbool.h>
 #include "StaticVariables.h"
@@ -106,10 +106,6 @@ typedef struct Graph{
 void add_Individuo_front(Fronts * fronts, Individuo *p);
 void malloc_rota_clone();
 bool update_times(Rota *rota);
-bool dominates(Individuo *a, Individuo *b);
-void add_dominated(Individuo *b, Individuo *a);
-void fast_nondominated_sort(Population *population, Fronts * fronts);
-void crowding_distance_assignment(Population *pop);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Graph *g, Rota* rota);
@@ -120,11 +116,8 @@ void evaluate_objective_functions_pop(Population* p, Graph *g);
 void free_population(Population *population);
 void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, float crossoverProbability, float mutationProbability );
 void empty_front_list(Fronts * f);
-void sort_by_crowding_distance_assignment(Population *front);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
-void select_parents_by_rank(Fronts *frontsList, Population *parents, Population *offsprings, Graph *g);
-void merge(Population *p1, Population *p2, Population *big_population);
 void complete_free_individuo(Individuo * idv);
 void repair(Individuo *offspring, Graph *g, int position);
 void mutation(Individuo *ind, Graph *g, float mutationProbability);
@@ -139,4 +132,4 @@ int * index_array_caronas_inserir;
 Request ** index_array_rotas;//Array com os índices ordenados das rotas, da menor pra maior qtd de matchable_riders
 
 
-#endif /* NSGAII_H_ */
+#endif /* GENERATIONALGA_H_ */

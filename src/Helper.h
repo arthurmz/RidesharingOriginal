@@ -8,7 +8,7 @@
 #ifndef HELPER_H_
 #define HELPER_H_
 
-#include "NSGAII.h"
+#include "GenerationalGA.h"
 
 
 Individuo * new_individuo(int drivers_qtd, int riders_qtd);
@@ -17,7 +17,6 @@ void clone_rota(Rota * rota, Rota *cloneRota);
 Individuo *generate_random_individuo(Graph *g, bool insereCaronasAleatorias);
 Population *generate_random_population(int size, Graph *g, bool insereCaronasAleatorias);
 void copy_rota(Individuo * origin, Individuo * destiny, int start, int end);
-Fronts* new_front_list(int max_capacity);
 //void clean_front_list(Fronts * f);
 Graph * parse_file(char *filename);
 void dealoc_graph(Graph*g);
