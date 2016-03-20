@@ -286,11 +286,6 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 
 	clone_rota(rota, ROTA_CLONE);
 
-	Service * anterior = &ROTA_CLONE->list[posicao_insercao-1];
-	Service * proximo = &ROTA_CLONE->list[posicao_insercao];
-	double pickup_result;
-	double delivery_result;
-
 	//if (!is_insercao_rota_valida_jt(anterior, proximo, carona, &pickup_result, &delivery_result))
 		//return false;
 

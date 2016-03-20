@@ -100,7 +100,8 @@ int main(int argc,  char** argv){
 		printf("Argumentos insuficientes\n");
 		return 0;
 	}
-	srand (time(NULL));
+	unsigned int seed = time(NULL);
+	srand (seed);
 	//srand (3);
 	//Parametros (variáveis)
 	int POPULATION_SIZE;
@@ -162,9 +163,10 @@ int main(int argc,  char** argv){
 	print(children);
 	printf("Número de riders combinados: %f\n", g->riders - children->list[0]->objetivos[3]);
 
-    printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
+	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 
-	print_to_file_decision_space(children,g);
+
+	print_to_file_decision_space(children,g,seed);
 
 	dealoc_full_population(parents);
 	dealoc_full_population(children);

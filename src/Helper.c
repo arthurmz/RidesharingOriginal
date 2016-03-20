@@ -263,12 +263,13 @@ void print(Population *p){
 
 
 /** Imprime para um arquivo o conteúdo do espaço de decisão dos indivíduos da população*/
-void print_to_file_decision_space(Population * p, Graph * g){
+void print_to_file_decision_space(Population * p, Graph * g, unsigned int seed){
 	FILE *fp=fopen("espaco_decisao.txt", "w");
 
 	for (int i = 0; i < p->size; i++){
 		Individuo * individuo = p->list[i];
 		fprintf(fp, "Indivíduo %d\n", i);
+		fprintf(fp, "Seed %u\n", seed);
 
 		for (int j = 0; j < g->drivers; j++){
 			for (int k = 0; k < individuo->cromossomo[j].length; k++){
