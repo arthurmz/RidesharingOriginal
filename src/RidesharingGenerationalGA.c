@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include "Helper.h"
-#include "Calculations.h"
 #include "GenerationalGA.h"
+#include "Calculations.h"
 
 
 //Inicializa vetores globais úteis
@@ -107,7 +107,7 @@ int main(int argc,  char** argv){
 	int POPULATION_SIZE;
 	int ITERATIONS;
 	int PRINT_ALL_GENERATIONS = 0;
-	float crossoverProbability = 0.75;
+	float crossoverProbability = 0.95;
 	float mutationProbability = 0.1;
 	char *filename = argv[1];
 

@@ -64,12 +64,7 @@ typedef struct Individuo{
 	int size;//tamanho da lista de rotas
 	float objetivos[4];
 
-	int dominated_by_count;//Número de soluções que dominam ind
-	struct Individuo **dominates_list;//Conjunto de soluções dominadas por this
-	int dominates_list_capacity;
-	int dominates_list_count;//número de soluções dominadas por ind
-	int rank;//Qual front este indivíduo está
-	float crowding_distance;
+	double objective_function;
 }Individuo;
 
 /*Os indivíduos são armazenados no heap pra
@@ -103,7 +98,6 @@ typedef struct Graph{
 
 
 //Graph *new_graph(int drivers, int riders, int total_requests);
-void add_Individuo_front(Fronts * fronts, Individuo *p);
 void malloc_rota_clone();
 bool update_times(Rota *rota);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
@@ -111,7 +105,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 void insere_carona_aleatoria_rota(Graph *g, Rota* rota);
 void desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int offset);
 void clean_riders_matches(Graph *g);
-void evaluate_objective_functions(Individuo *idv, Graph *g);
+double evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
 void free_population(Population *population);
 void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, float crossoverProbability, float mutationProbability );

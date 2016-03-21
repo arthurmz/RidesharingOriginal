@@ -5,15 +5,13 @@
  *      Author: arthur
  */
 
-
-
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "Helper.h"
-#include "Calculations.h"
 #include "GenerationalGA.h"
+#include "Calculations.h"
 
 
 Rota *ROTA_CLONE;
@@ -22,19 +20,6 @@ void malloc_rota_clone(){
 	/*Criando uma rota para cópia e validação das rotas*/
 	ROTA_CLONE = (Rota*) calloc(1, sizeof(Rota));
 	ROTA_CLONE->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
-}
-
-/*Adiciona o indivíduo de rank k no front k de FRONTS
- * Atualiza o size de FRONTS caso o rank seja maior*/
-void add_Individuo_front(Fronts * fronts, Individuo *p){
-	Population *fronti = fronts->list[p->rank];
-	if (fronts->size < p->rank + 1){
-	  fronti->size = 0;
-	  fronts->size++;
-	}
-	
-	fronti->list[fronti->size] = p;
-	fronti->size++;
 }
 
 /*Pra poder usar a função qsort com N objetivos,
@@ -120,25 +105,6 @@ void sort_by_objective(Population *pop, int obj){
 			qsort(pop->list, pop->size, sizeof(Individuo*), compare3 );
 			break;
 	}
-}
-
-/*Pra poder usar a função qsort com N objetivos,
- * precisamos implementar os n algoritmos de compare*/
-int compareByCrowdingDistanceMax(const void *p, const void *q) {
-    int ret;
-    Individuo * x = *(Individuo **)p;
-    Individuo * y = *(Individuo **)q;
-    if (x->crowding_distance == y->crowding_distance)
-        ret = 0;
-    else if (x->crowding_distance > y->crowding_distance)
-        ret = -1;
-    else
-        ret = 1;
-    return ret;
-}
-
-bool crowded_comparison_operator(Individuo *a, Individuo *b){
-	return (a->rank < b->rank || (a->rank == b->rank && a->crowding_distance > b->crowding_distance));
 }
 
 
@@ -378,7 +344,7 @@ void evaluate_objective_functions_pop(Population* p, Graph *g){
 }
 
 
-void evaluate_objective_functions(Individuo *idv, Graph *g){
+double evaluate_objective_functions(Individuo *idv, Graph *g){
 	double distance = 0;
 	double vehicle_time = 0;
 	double rider_time = 0;
@@ -412,6 +378,17 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 	idv->objetivos[TOTAL_TIME_RIDER_TRIPS] = rider_time;
 	idv->objetivos[RIDERS_UNMATCHED] = riders_unmatched;
 
+	double alfa = 0.7;
+	double beta = 0.1;
+	double epsilon = 0.1;
+	double sigma = 0.1;
+	idv->objective_function =
+			alfa * idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP]
+			+beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS]
+			+epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS]
+			+sigma * idv->objetivos[RIDERS_UNMATCHED];
+	return idv->objective_function;
+
 }
 
 
@@ -443,15 +420,18 @@ void insere_carona_aleatoria_rota(Graph *g, Rota* rota){
 
 
 /*seleção por torneio, k = 2*/
-Individuo * tournamentSelection(Population * parents){
-	Individuo * best = NULL;
-	for (int i = 0; i < 2; i++){
-		int pos = rand() % parents->size;
-		Individuo * outro = parents->list[pos];
-		if (best == NULL || crowded_comparison_operator(outro, best))
-			best = outro;
-	}
-	return best;
+Individuo * tournamentSelection(Population * parents, Graph * g){
+	int pos = rand() % parents->size;
+	Individuo * idv1 = parents->list[pos];
+	pos = rand() % parents->size;
+	Individuo * idv2 = parents->list[pos];
+
+	evaluate_objective_functions(idv1, g);
+	evaluate_objective_functions(idv2, g);
+
+	if (idv1->objective_function < idv2->objective_function)
+		return idv1;
+	else return idv2;
 }
 
 void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, Individuo *offspring2, Graph *g, float crossoverProbability){
@@ -590,8 +570,8 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 	int i = 0;
 	while (offspring->size < parents->size){
 
-		Individuo *parent1 = tournamentSelection(parents);
-		Individuo *parent2 = tournamentSelection(parents);
+		Individuo *parent1 = tournamentSelection(parents, g);
+		Individuo *parent2 = tournamentSelection(parents, g);
 
 		Individuo *offspring1 = offspring->list[i++];
 		Individuo *offspring2 = offspring->list[i];
