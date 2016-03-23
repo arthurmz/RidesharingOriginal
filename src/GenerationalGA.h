@@ -62,7 +62,7 @@ typedef struct Individuo{
 	//Cada Service é uma coleta ou entrega(tanto de motorista como de carona)
 	Rota * cromossomo;
 	int size;//tamanho da lista de rotas
-	float objetivos[4];
+	double objetivos[4];
 
 	double objective_function;
 }Individuo;
@@ -99,7 +99,7 @@ typedef struct Graph{
 
 //Graph *new_graph(int drivers, int riders, int total_requests);
 void malloc_rota_clone();
-bool update_times(Rota *rota);
+bool update_times(Rota *rota, int p);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Graph *g, Rota* rota);
@@ -108,18 +108,17 @@ void clean_riders_matches(Graph *g);
 double evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
 void free_population(Population *population);
-void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, float crossoverProbability, float mutationProbability );
+void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability );
 void empty_front_list(Fronts * f);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
 void complete_free_individuo(Individuo * idv);
 void repair(Individuo *offspring, Graph *g, int position);
-void mutation(Individuo *ind, Graph *g, float mutationProbability);
+void mutation(Individuo *ind, Graph *g, double mutationProbability);
 
 
 int * index_array_riders;
 int * index_array_drivers;
-int * index_array_half_drivers;//metade dos motoristas
 int * index_array_caronas_inserir;
 
 

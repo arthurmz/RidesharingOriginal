@@ -130,78 +130,34 @@ bool push_forward(Rota * rota, int position, double pf){
 }
 
 
-
-/*
- *Atualiza os tempos de inserção no ponto de inserção até o fim da rota.
- *Ao mesmo tempo, se identificar uma situação onde não dá pra inserir, retorna false
+/**
+ * Atualiza os tempos de inserção no ponto de inserção até o fim da rota.
+ * Ao mesmo tempo, se identificar uma situação onde não dá pra inserir, retorna false
  *
- *coloca o servicetime do delivery do motorista como o mais cedo
- *percorre a rota do fim pro início, setando o servicetime
- *st_i = st_i+1 - tempo(i, i+1);
- *se st_i < earliest_time
- *	push_forward(i+1);
- *se st_i > latest_time
- *	st_i = latest_time;
- *
- *Faz isso pra todo mundo, depois minimiza o tempo de espera.
- *
- * */
-bool update_times(Rota *rota){
-	Service * motoristaDelivery = &rota->list[rota->length-1];
+ * Diferentemente do update_times do nsga-ii. Este aqui atualiza sequencialmente
+ * os tempos da rota à partir do ponto P inserido.
+ */
+bool update_times(Rota *rota, int p){
 
-	motoristaDelivery->service_time = motoristaDelivery->r->delivery_earliest_time;
-
-	/**
-	 * Calcula o service_time de i =
-	 * service_time_i = service_time_i+1 - tempo(i, i+1)
-	 *
-	 * se o service_time_i < at então service_time_i = at;
-	 * Isso acarreta que agora o service_time_i+1 precisa ser empurrado.
-	 * Isso é feito depois.
-	 *
-	 * Se o service_time_i > bt, service_time_i = bt, e agora
-	 * service_time_i+1 ganha um waiting_time;
-	 */
-	for (int i = rota->length-2; i >= 0; i--){
+	for (int i = p; i >= rota->length; i++){
+		Service *anterior = &rota->list[i-1];
 		Service *atual = &rota->list[i];
-		Service *prox = &rota->list[i+1];
 		double at = get_earliest_time_service(atual);
 		double bt = get_latest_time_service(atual);
 
-		double tbs = time_between_services(atual, prox);
+		double tbs = time_between_services(anterior, atual);
 
-		atual->service_time = prox->service_time - tbs;
+		atual->service_time = anterior->service_time - tbs;
 
 		if (atual->service_time > bt){
 			atual->service_time = bt;
+			return false;
 		}
 		else if (atual->service_time < at){
-			double pf = at - atual->service_time;
 			atual->service_time = at;
-			bool conseguiu = push_forward(rota, i+1, pf);
-			if (!conseguiu)
-				return false;
 		}
 	}
 
-	/**Empurra os service_times entre services que se aproximaram
-	 * por causa do calculo anterior
-	 */
-	/*
-	for (int i = 0; i < rota->length-1; i++){
-		Service * atual = &rota->list[i];
-		Service * next = &rota->list[i+1];
-		double bt = get_latest_time_service(next);
-
-		double tbs = time_between_services(atual, next);
-
-		if (next->service_time < atual->service_time + tbs)
-			next->service_time = atual->service_time + tbs;
-
-		if (next->service_time > bt)
-			return false;
-	}
-	*/
 	return true;
 }
 
@@ -236,17 +192,12 @@ void minimize_waiting_time(Rota * rota){
 }
 
 
-/*
- * A0101B = tamanho 6
- * 			de 0 a 5
- * 	Inserir na posiçao 0 não pode pq já tem o motorista
- * 	Inserir na posição 1, empurra os demais pra frente
- * 	Inserir o destino é contado à partir da origem (offset)
- * 	offset = 0 não pode pq é o proprio origem, 1 pode e é o próximo,
- * 	2 é o que pula um e insere.
- *
- * 	inserir_de_fato - Se deve inserir mesmo ou é apenas um teste
- * */
+/**
+ * O método de inserção do algoritmo original é o seguinte:
+ * Em uma rota aleatória, e com uma carona aleatória a adicionar, determinamos o ponto P de inserção.
+ * Então os tempos da rota são determinados sequencialmente à partir do ponto anterior.
+ * A inserção testa todas as possibilidades do delivery de P+1.
+ */
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
 	if (posicao_insercao <= 0 || offset <= 0) return false;
 
@@ -289,7 +240,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		ROTA_CLONE->list = realloc(ROTA_CLONE->list, ROTA_CLONE->capacity * sizeof(Service));
 	}
 
-	bool rotaValida = update_times(ROTA_CLONE);
+	bool rotaValida = update_times(ROTA_CLONE, posicao_insercao);
 
 	if (rotaValida)
 		rotaValida = is_rota_valida(ROTA_CLONE);
@@ -315,9 +266,6 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 void desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int offset){
 	if (posicao_insercao <= 0 || offset <= 0) return;
 
-	if (rota->length == 2)
-		printf("rota vai ficar vazia");
-
 	for (int i = posicao_insercao; i < rota->length-1; i++){
 		rota->list[i] = rota->list[i+1];
 	}
@@ -339,7 +287,6 @@ void clean_riders_matches(Graph *g){
 void evaluate_objective_functions_pop(Population* p, Graph *g){
 	for (int i = 0; i < p->size; i++){//Pra cada um dos indivíduos
 		evaluate_objective_functions(p->list[i], g);
-		//clean_riders_matches(g);
 	}
 }
 
@@ -434,13 +381,13 @@ Individuo * tournamentSelection(Population * parents, Graph * g){
 	else return idv2;
 }
 
-void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, Individuo *offspring2, Graph *g, float crossoverProbability){
+void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, Individuo *offspring2, Graph *g, double crossoverProbability){
 	int rotaSize = g->drivers;
 	offspring1->size = rotaSize;
 	offspring2->size = rotaSize;
 
 	int crossoverPoint = 1 + (rand() % (rotaSize-1));
-	float accept = (float)rand() / RAND_MAX;
+	double accept = (double)rand() / RAND_MAX;
 
 	if (accept < crossoverProbability){
 		copy_rota(parent2, offspring1, 0, crossoverPoint);
@@ -501,31 +448,30 @@ void repair(Individuo *offspring, Graph *g, int position){
  * riders para outra com menos.
  */
 void transfer_rider(Individuo * ind, Graph * g){
-	Rota * rotaInserir;
-	Rota * rotaRemover;
+	Rota * rotaInserir = NULL;
+	Rota * rotaRemover = NULL;
 	Request * caronaInserir;
 	Request * motoristaInserir;
 	bool ok = false;
-	// busca entre a metade dos motoristas "menores" o primeiro sem match que pode ter um mach
-	for (int i = 0 ; i < g->drivers/2; i++){
-		int k = index_array_half_drivers[i];
+
+	for (int i = 0 ; i < g->drivers; i++){
+		int k = index_array_drivers[i];
 		rotaInserir = &ind->cromossomo[k];
 		motoristaInserir = &g->request_list[k];
 
 		if (rotaInserir->length/2 - 1 < motoristaInserir->matchable_riders){
-
 			for (int p =0; p < motoristaInserir->matchable_riders; p++){
-				if ( motoristaInserir->matchable_riders_list[p]->matched
-						&& motoristaInserir->matchable_riders_list[p]->id_rota_match != rotaInserir->id
-						&& motoristaInserir->matchable_riders_list[p]->id_rota_match >= g->drivers/2){
-					caronaInserir = motoristaInserir->matchable_riders_list[p];
-					rotaRemover = &ind->cromossomo[caronaInserir->id_rota_match];
+				Request * caronaTemp = motoristaInserir->matchable_riders_list[p];
+				Rota * rotaTemp = &ind->cromossomo[caronaTemp->id_rota_match];
+
+				if ( caronaTemp->matched && rotaTemp->id != rotaInserir->id && rotaInserir->length < rotaTemp->length){
+					caronaInserir = caronaTemp;
+					rotaRemover = rotaTemp;
 					ok = true;
 					break;
 				}
 			}
-			if (ok)
-				break;
+			if (ok) break;
 		}
 	}
 
@@ -553,11 +499,10 @@ void transfer_rider(Individuo * ind, Graph * g){
 }
 
 /** 1a mutação: remover o carona de uma rota e inserir em um motorista onde só cabe um carona*/
-void mutation(Individuo *ind, Graph *g, float mutationProbability){
-	float accept = (float)rand() / RAND_MAX;
+void mutation(Individuo *ind, Graph *g, double mutationProbability){
+	double accept = (double)rand() / RAND_MAX;
 
 	if (accept < mutationProbability){
-		shuffle(index_array_half_drivers, g->drivers/2);
 		transfer_rider(ind, g);
 	}
 }
@@ -565,7 +510,7 @@ void mutation(Individuo *ind, Graph *g, float mutationProbability){
 
 
 /*Gera uma população de filhos, usando seleção, crossover e mutação*/
-void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, float crossoverProbability, float mutationProbability){
+void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability){
 	offspring->size = 0;//Tamanho = 0, mas considera todos já alocados
 	int i = 0;
 	while (offspring->size < parents->size){

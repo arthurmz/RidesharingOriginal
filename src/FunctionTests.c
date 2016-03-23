@@ -13,7 +13,7 @@
 
 
 typedef struct Simples{
-	float t;
+	double t;
 } Simples;
 
 
@@ -67,13 +67,13 @@ int mainbak(){
 //TEste harversine
 int main_haversine(){
 
-	float longitude_a = -88.233519999999999;
-	float latitude_a = 41.79233;
+	double longitude_a = -88.233519999999999;
+	double latitude_a = 41.79233;
 
-	float longitude_b = -87.98536;
-	float latitude_b = 41.708320000000001;
+	double longitude_b = -87.98536;
+	double latitude_b = 41.708320000000001;
 
-	float result = haversine_helper(latitude_a, longitude_a, latitude_b, longitude_b);
+	double result = haversine_helper(latitude_a, longitude_a, latitude_b, longitude_b);
 
 	printf("%f\n", result * 1.3);
 	return 0;

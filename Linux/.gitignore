@@ -35,6 +35,4 @@
 output.txt
 espaco_decisao.txt
 *.mk
-*~
-*qtd_matches_minima.txt
 /Release/
