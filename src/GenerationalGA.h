@@ -124,5 +124,7 @@ int * index_array_caronas_inserir;
 
 Request ** index_array_rotas;//Array com os índices ordenados das rotas, da menor pra maior qtd de matchable_riders
 
+Graph * g;
+
 
 #endif /* GENERATIONALGA_H_ */

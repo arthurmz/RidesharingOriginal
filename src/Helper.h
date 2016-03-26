@@ -29,5 +29,6 @@ void dealoc_fronts(Fronts * f);
 void print(Population *p);
 Graph *new_graph(int drivers, int riders, int total_requests);
 void print_to_file_decision_space(Population * p, Graph * g, unsigned int seed);
+void fill_array(int * array, int size);
 
 #endif /* HELPER_H_ */

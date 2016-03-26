@@ -84,10 +84,6 @@ void copy_rota(Individuo * origin, Individuo * destiny, int start, int end){
 		rotaDestino->length = rotaOrigem->length;
 		for (int j = 0; j < rotaOrigem->length; j++){
 			rotaDestino->list[j] = rotaOrigem->list[j];
-			//rotaDestino->list[j].r = rotaOrigem->list[j].r;
-			//rotaDestino->list[j].is_source = rotaOrigem->list[j].is_source;
-			//rotaDestino->list[j].service_time = rotaOrigem->list[j].service_time;
-			//destiny->cromossomo[i].list[j].waiting_time = rota->list[j].waiting_time;
 		}
 	}
 
@@ -300,4 +296,10 @@ void print_to_file_decision_space(Population * p, Graph * g, unsigned int seed){
 	fclose(fp);
 }
 
+/**Preenche o array sequencialmente*/
+void fill_array(int * array, int size){
+	for (int i = 0; i < size; i++){
+		array[i] = i;
+	}
+}
 

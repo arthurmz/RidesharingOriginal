@@ -24,15 +24,9 @@ void initialize_mem(Graph * g){
 	index_array_riders = malloc(g->riders * sizeof(int));
 	index_array_drivers = malloc(g->drivers * sizeof(int));
 	index_array_caronas_inserir = malloc(MAX_SERVICES_MALLOC_ROUTE * 10 * sizeof(int));
-	for (int i = 0; i < g->riders; i++){
-		index_array_riders[i] = i;
-	}
-	for (int i = 0; i < g->drivers; i++){
-		index_array_drivers[i] = i;
-	}
-	for (int i = 0; i < (MAX_SERVICES_MALLOC_ROUTE * 10); i++){
-		index_array_caronas_inserir[i] = i;
-	}
+	fill_array(index_array_riders, g->riders);
+	fill_array(index_array_drivers, g->drivers);
+	fill_array(index_array_caronas_inserir, MAX_SERVICES_MALLOC_ROUTE * 10);
 }
 
 void setup_matchable_riders(Graph * g){
@@ -104,7 +98,6 @@ int main(int argc,  char** argv){
 		return 0;
 	}
 	unsigned int seed = time(NULL);
-	//srand (3);
 	//Parametros (variáveis)
 	int POPULATION_SIZE;
 	int ITERATIONS;
@@ -123,7 +116,7 @@ int main(int argc,  char** argv){
 		sscanf(argv[6], "%d", &PRINT_ALL_GENERATIONS);
 	if (argc >= 8)
 		sscanf(argv[7], "%u", &seed);
-	Graph * g = (Graph*)parse_file(filename);
+	g = (Graph*)parse_file(filename);
 	if (g == NULL) return 0;
 
 	srand (seed);

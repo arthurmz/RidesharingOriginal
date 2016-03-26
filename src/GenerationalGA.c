@@ -108,26 +108,7 @@ void sort_by_objective(Population *pop, int obj){
 }
 
 
-/*Tenta empurar os services uma certa quantidade de tempo*/
-bool push_forward(Rota * rota, int position, double pf){
-	for (int i = position; i < rota->length; i++){
-		if (pf == 0) return true;
-		Service * svc = &rota->list[i];
-		Service * ant = &rota->list[i-1];
-		double at = get_earliest_time_service(svc);
-		double bt = get_latest_time_service(svc);
 
-		double waiting_time = svc->service_time - ant->service_time - haversine(ant, svc);
-		if (waiting_time > 0)
-			pf -= waiting_time;
-		if (pf < 0)
-			pf = 0;
-		double new_st = rota->list[i].service_time + pf;
-		if (new_st < at || new_st > bt)
-			return false;
-	}
-	return true;
-}
 
 
 /**
@@ -444,6 +425,11 @@ void repair(Individuo *offspring, Graph *g, int position){
 	}
 }
 
+
+void swap_rider(){
+
+}
+
 /** Transfere o carona de uma rota com possivelmente mais
  * riders para outra com menos.
  */
@@ -498,12 +484,114 @@ void transfer_rider(Individuo * ind, Graph * g){
 	}
 }
 
-/** 1a mutação: remover o carona de uma rota e inserir em um motorista onde só cabe um carona*/
-void mutation(Individuo *ind, Graph *g, double mutationProbability){
-	double accept = (double)rand() / RAND_MAX;
+void remove_insert(){
 
-	if (accept < mutationProbability){
-		transfer_rider(ind, g);
+}
+
+/*Tenta empurar os services uma certa quantidade de tempo*/
+bool push_forward(Rota * rota){
+	clone_rota(rota, ROTA_CLONE);
+
+	int position = rand() % ROTA_CLONE->length;
+	Service * atual = &ROTA_CLONE->list[position];
+	double pushf = get_latest_time_service(atual) - atual->service_time;
+	if (pushf <= 0) return false;
+
+	atual->service_time+= pushf;
+
+	for (int i = position+1; i < ROTA_CLONE->length; i++){
+		if (pushf == 0) return true;
+		atual = &ROTA_CLONE->list[i];
+		Service * ant = &ROTA_CLONE->list[i-1];
+		double at = get_earliest_time_service(atual);
+		double bt = get_latest_time_service(atual);
+
+		double waiting_time = atual->service_time - ant->service_time - haversine(ant, atual);
+		if (waiting_time > 0)
+			pushf -= waiting_time;
+		if (pushf < 0)
+			pushf = 0;
+		double new_st = ROTA_CLONE->list[i].service_time + pushf;
+		if (new_st < at || new_st > bt)
+			return false;
+		atual->service_time = new_st;
+	}
+	clone_rota(ROTA_CLONE, rota);
+	return true;
+}
+
+/*Tenta empurar os services uma certa quantidade de tempo*/
+bool push_backward(Rota * rota){
+	clone_rota(rota, ROTA_CLONE);
+
+	int position = rand() % ROTA_CLONE->length;
+	Service * atual = &ROTA_CLONE->list[position];
+	double pushf = get_latest_time_service(atual) - atual->service_time;
+	if (pushf <= 0) return false;
+
+	atual->service_time+= pushf;
+
+	for (int i = position+1; i < ROTA_CLONE->length; i++){
+		if (pushf == 0) return true;
+		atual = &ROTA_CLONE->list[i];
+		Service * ant = &ROTA_CLONE->list[i-1];
+		double at = get_earliest_time_service(atual);
+		double bt = get_latest_time_service(atual);
+
+		double waiting_time = atual->service_time - ant->service_time - haversine(ant, atual);
+		if (waiting_time > 0)
+			pushf -= waiting_time;
+		if (pushf < 0)
+			pushf = 0;
+		double new_st = ROTA_CLONE->list[i].service_time + pushf;
+		if (new_st < at || new_st > bt)
+			return false;
+		atual->service_time = new_st;
+	}
+	clone_rota(ROTA_CLONE, rota);
+	return true;
+}
+
+void mutation(Individuo *ind, Graph *g, double mutationProbability){
+	for (int r = 0; r < ind->size; r++){
+		double accept = (double)rand() / RAND_MAX;
+
+		if (accept < mutationProbability){
+			Rota * rota  = &ind->cromossomo[r];
+
+			int operators = 5;
+			int index = 0;
+			int mutation_array[operators];
+			fill_array(mutation_array, operators);
+			shuffle(mutation_array, operators);
+			bool ok = false;
+
+			while (!ok && index < operators){
+				switch(mutation_array[index]){
+				case 0 :
+					push_backward(rota);
+					ok = true;
+					break;
+				case 1 :
+					push_forward(rota);
+					ok = true;
+					break;
+				case 2 :
+					remove_insert();
+					ok = true;
+					break;
+				case 3 :
+					transfer_rider(ind, g);
+					ok = true;
+					break;
+				case 4 :
+					swap_rider();
+					ok = true;
+					break;
+				}
+				index++;
+			}
+		}
 	}
 }
 
