@@ -253,7 +253,7 @@ void dealoc_fronts(Fronts * front){
 void print(Population *p){
 	for (int i = 0; i < p->size; i++){
 		Individuo *id = p->list[i];
-		printf("%lf %lf %lf %lf\n",id->objetivos[0], id->objetivos[1], id->objetivos[2], id->objetivos[3]);
+		printf("%f %f %f %f\n",id->objetivos[0], id->objetivos[1], id->objetivos[2], id->objetivos[3]);
 	}
 }
 
