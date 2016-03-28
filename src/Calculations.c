@@ -76,7 +76,7 @@ double tempo_gasto_rota(Rota *rota, int i, int j){
 
 /**Calcula o service_time mais cedo possível para actual. Baseado
  * no service_time de ant */
-double calculate_time_at(Service * actual, Service *ant){
+double calculate_service_time(Service * actual, Service *ant){
 	double next_time = 0;
 
 	double st;
@@ -85,16 +85,10 @@ double calculate_time_at(Service * actual, Service *ant){
 	else
 		st = ant->r->service_time_at_delivery;
 
-	double janela_tempo_a;
-	if (actual->is_source)
-		janela_tempo_a = actual->r->pickup_earliest_time;
-	else
-		janela_tempo_a = actual->r->delivery_earliest_time;
-
+	double at = get_earliest_time_service(actual);
 
 	next_time = ant->service_time + st + time_between_services(ant, actual);
-	next_time = fmax(next_time, janela_tempo_a);
-
+	next_time = fmax(next_time, at);
 
 	return next_time;
 }

@@ -102,8 +102,8 @@ void malloc_rota_clone();
 bool update_times(Rota *rota, int p);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
-void insere_carona_aleatoria_rota(Graph *g, Rota* rota);
-void desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int offset);
+void insere_carona_aleatoria_rota(Rota* rota);
+int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
 double evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
@@ -115,6 +115,8 @@ int compare_rotas(const void *p, const void *q);
 void complete_free_individuo(Individuo * idv);
 void repair(Individuo *offspring, Graph *g, int position);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
+bool push_backward(Rota * rota, int position);
+bool push_forward(Rota * rota, int position, double pushf);
 
 
 int * index_array_riders;
