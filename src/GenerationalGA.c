@@ -206,8 +206,6 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	ant = &ROTA_CLONE->list[posicao_insercao+offset-1];
 	atual = &ROTA_CLONE->list[posicao_insercao+offset];
 	next = &ROTA_CLONE->list[posicao_insercao+offset+1];
-
-
 	atual->service_time = calculate_service_time(atual, ant);
 	nextTime = calculate_service_time(next, atual);
 	PF = nextTime - next->service_time;
@@ -230,6 +228,11 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		ROTA_CLONE->capacity += MAX_SERVICES_MALLOC_ROUTE;
 		ROTA_CLONE->list = realloc(ROTA_CLONE->list, ROTA_CLONE->capacity * sizeof(Service));
 	}
+	//Aumentar a capacidade se tiver chegando no limite
+	if (rota->length == rota->capacity - 4){
+		rota->capacity += MAX_SERVICES_MALLOC_ROUTE;
+		rota->list = realloc(rota->list, rota->capacity * sizeof(Service));
+	}
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
 
@@ -243,8 +246,12 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 }
 
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int quemChama){
+	if (posicao_insercao >= rota->length-2 || posicao_insercao <= 0) return 0;
+
 	int offset = 1;
 	for (int k = posicao_insercao+1; k < rota->length; k++){//encontrando o offset
+		if (rota->list[k].is_source && rota->list[posicao_insercao].r == rota->list[k].r)
+			printf("algo de errado muito errado aconteceu\n");
 		if (rota->list[posicao_insercao].r == rota->list[k].r && !rota->list[k].is_source)
 			break;
 		offset++;
@@ -253,7 +260,7 @@ int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int quemChama)
 	if(rota->length == 2)
 		printf ("achei");
 
-	if (posicao_insercao <= 0 || offset <= 0) return offset;
+	if (offset <= 0) return 0;
 
 	for (int i = posicao_insercao; i < rota->length-1; i++){
 		rota->list[i] = rota->list[i+1];
@@ -414,10 +421,12 @@ void repair(Individuo *offspring, Graph *g, int position){
 	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
 		Rota *rota = &offspring->cromossomo[i];
 
-		for (int j = 0; j < rota->length; j++){//pra cada um dos services SOURCES na rota
+		for (int j = 0; j < rota->length-1; j++){//pra cada um dos services SOURCES na rota
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
 			if ((rota->list[j].is_source && rota->list[j].r->matched)){
+				if (j == rota->length-1)
+				printf("vai dar merda\n");
 				desfaz_insercao_carona_rota(rota, j, 1);
 			}
 			else if (!rota->list[j].r->driver){
@@ -590,7 +599,7 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 					ok = push_forward(rota, -1, -1);
 					break;
 				case 2 :
-					//ok = remove_insert(rota);
+					ok = remove_insert(rota);
 					break;
 				case 3 :
 					//transfer_rider(ind, g);

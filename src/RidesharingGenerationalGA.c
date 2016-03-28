@@ -61,7 +61,7 @@ void print_qtd_matches_minima(Graph * g){
 	int motor_array[g->drivers];
 	int qtd_array[g->total_requests];
 	for (int i = 0; i < g->drivers; i++){
-		motor_array[0] = 0;
+		motor_array[i] = 0;
 	}
 	for (int i = 0; i < g->total_requests; i++){
 		qtd_array[i] = 0;

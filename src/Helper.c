@@ -94,23 +94,13 @@ void copy_rota(Individuo * origin, Individuo * destiny, int start, int end){
  * clonada não servir*/
 void clone_rota(Rota * rota, Rota *cloneRota){
 	cloneRota->id = rota->id;
+	cloneRota->capacity = rota->capacity;
 	cloneRota->length = rota->length;
 	for (int i = 0; i < rota->length; i++){
 		cloneRota->list[i] = rota->list[i];
 	}
 }
 
-void complete_free_individuo(Individuo * idv){
-	if (idv != NULL){
-		for (int i = 0; i < idv->size; i++){
-			if (idv->cromossomo != NULL && idv->cromossomo[i].list != NULL)
-				free(idv->cromossomo[i].list);
-		}
-		if (idv->cromossomo != NULL)
-			free(idv->cromossomo);
-		free(idv);
-	}
-}
 
 /*Aloca uma nova população de tamanho max_capacity
  * Cada elemento de list é um ponteiro pra indivíduo NÃO ALOCADO*/
