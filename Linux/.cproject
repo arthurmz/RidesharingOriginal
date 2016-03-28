@@ -111,15 +111,6 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="RidesharingNSGAII.cdt.managedbuild.target.gnu.mingw.exe.272554043" name="Executable" projectType="cdt.managedbuild.target.gnu.mingw.exe"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.mingw.exe.release.1903770136;cdt.managedbuild.config.gnu.mingw.exe.release.1903770136.;cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.release.227487919;cdt.managedbuild.tool.gnu.c.compiler.input.885185644">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.mingw.exe.debug.1777349078;cdt.managedbuild.config.gnu.mingw.exe.debug.1777349078.;cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.debug.1398461449;cdt.managedbuild.tool.gnu.c.compiler.input.1451201836">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug">
@@ -130,4 +121,16 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.mingw.exe.debug.1777349078;cdt.managedbuild.config.gnu.mingw.exe.debug.1777349078.;cdt.managedbuild.tool.gnu.c.compiler.base.747336927;cdt.managedbuild.tool.gnu.c.compiler.input.2093208888">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.mingw.exe.debug.1777349078;cdt.managedbuild.config.gnu.mingw.exe.debug.1777349078.;cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.debug.1398461449;cdt.managedbuild.tool.gnu.c.compiler.input.1451201836">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.mingw.exe.release.1903770136;cdt.managedbuild.config.gnu.mingw.exe.release.1903770136.;cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.release.227487919;cdt.managedbuild.tool.gnu.c.compiler.input.885185644">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>

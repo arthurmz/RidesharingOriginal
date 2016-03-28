@@ -157,7 +157,9 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	bool isRotaValida = false;
 	Service * ant = NULL;
 	Service * atual = NULL;
+	Service * next = NULL;
 	double PF;
+	double nextTime;
 
 	int ultimaPos = ROTA_CLONE->length-1;
 	//Empurra todo mundo depois da posição de inserção
@@ -167,17 +169,29 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		ROTA_CLONE->list[i+1].r = ROTA_CLONE->list[i].r;
 		ROTA_CLONE->list[i+1].service_time = ROTA_CLONE->list[i].service_time;
 	}
-	ROTA_CLONE->length++;
 	//Insere o conteúdo do novo carona
 	ROTA_CLONE->list[posicao_insercao].r = carona;
 	ROTA_CLONE->list[posicao_insercao].is_source = true;
 	ant = &ROTA_CLONE->list[posicao_insercao-1];
 	atual = &ROTA_CLONE->list[posicao_insercao];
-	ROTA_CLONE->list[posicao_insercao].service_time = calculate_service_time(atual, ant);
-	PF = ROTA_CLONE->list[posicao_insercao].service_time - ROTA_CLONE->list[posicao_insercao+1].service_time;
-	isRotaValida = push_forward(ROTA_CLONE, posicao_insercao, PF);
+	next = &ROTA_CLONE->list[posicao_insercao+1];
+	atual->service_time = calculate_service_time(atual, ant);
+	nextTime = calculate_service_time(next, atual);
+	PF = nextTime - next->service_time;
+	if (PF > 0) {
+		next->service_time+= PF;
+		if (posicao_insercao+2 < ROTA_CLONE->length)
+			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+2, PF);
+		else
+			isRotaValida = true;
+	}
+	else{
+		isRotaValida = true;
+	}
+	ROTA_CLONE->length++;
 	if (!isRotaValida)
 		return false;
+
 
 	//Empurra todo mundo depois da posição do offset
 	for (int i = ultimaPos+1; i >= posicao_insercao + offset; i--){
@@ -186,15 +200,28 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		ROTA_CLONE->list[i+1].r = ROTA_CLONE->list[i].r;
 		ROTA_CLONE->list[i+1].service_time = ROTA_CLONE->list[i].service_time;
 	}
-	ROTA_CLONE->length++;
 	//Insere o conteúdo do destino do carona
 	ROTA_CLONE->list[posicao_insercao+offset].r = carona;
-	ROTA_CLONE->list[posicao_insercao+offset].is_source = true;
+	ROTA_CLONE->list[posicao_insercao+offset].is_source = false;
 	ant = &ROTA_CLONE->list[posicao_insercao+offset-1];
 	atual = &ROTA_CLONE->list[posicao_insercao+offset];
-	ROTA_CLONE->list[posicao_insercao+offset].service_time = calculate_service_time(atual, ant);
-	PF = ROTA_CLONE->list[posicao_insercao+offset].service_time - ROTA_CLONE->list[posicao_insercao+offset+1].service_time;
-	isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+offset, PF);
+	next = &ROTA_CLONE->list[posicao_insercao+offset+1];
+
+
+	atual->service_time = calculate_service_time(atual, ant);
+	nextTime = calculate_service_time(next, atual);
+	PF = nextTime - next->service_time;
+	if (PF > 0) {
+		next->service_time+= PF;
+		if (posicao_insercao+offset+2 < ROTA_CLONE->length)
+			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+offset+2, PF);
+		else
+			isRotaValida = true;
+	}
+	else{
+		isRotaValida = true;
+	}
+	ROTA_CLONE->length++;
 	if (!isRotaValida)
 		return false;
 
@@ -215,7 +242,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	return isRotaValida;
 }
 
-int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao){
+int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int quemChama){
 	int offset = 1;
 	for (int k = posicao_insercao+1; k < rota->length; k++){//encontrando o offset
 		if (rota->list[posicao_insercao].r == rota->list[k].r && !rota->list[k].is_source)
@@ -223,20 +250,20 @@ int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao){
 		offset++;
 	}
 
-	if (posicao_insercao <= 0 || offset <= 0) return offset;
+	if(rota->length == 2)
+		printf ("achei");
 
+	if (posicao_insercao <= 0 || offset <= 0) return offset;
 
 	for (int i = posicao_insercao; i < rota->length-1; i++){
 		rota->list[i] = rota->list[i+1];
 	}
 	rota->length--;
 
-
 	for (int i = posicao_insercao+offset-1; i < rota->length-1; i++){
 		rota->list[i] = rota->list[i+1];
 	}
 	rota->length--;
-
 
 	return offset;
 }
@@ -391,7 +418,7 @@ void repair(Individuo *offspring, Graph *g, int position){
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
 			if ((rota->list[j].is_source && rota->list[j].r->matched)){
-				desfaz_insercao_carona_rota(rota, j);
+				desfaz_insercao_carona_rota(rota, j, 1);
 			}
 			else if (!rota->list[j].r->driver){
 				rota->list[j].r->matched = true;
@@ -449,7 +476,7 @@ void transfer_rider(Individuo * ind, Graph * g){
 				if ( rotaRemover->list[position].r == caronaInserir )
 					break;
 			}
-			desfaz_insercao_carona_rota(rotaRemover,position);
+			desfaz_insercao_carona_rota(rotaRemover,position, 2);
 		}
 		caronaInserir->matched = true;
 	}
@@ -458,7 +485,7 @@ void transfer_rider(Individuo * ind, Graph * g){
 bool remove_insert(Rota * rota){
 	if (rota->length < 4) return false;
 	int position = 1 + (rand() % (rota->length-1));
-	int offset = desfaz_insercao_carona_rota(rota, position);
+	int offset = desfaz_insercao_carona_rota(rota, position, 3);
 	//push_backward(rota, position);
 	//push_backward(rota, offset);
 	//insere_carona_aleatoria_rota(rota);
@@ -544,6 +571,7 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 		double accept = (double)rand() / RAND_MAX;
 
 		if (accept < mutationProbability){
+			clean_riders_matches(g);
 			Rota * rota  = &ind->cromossomo[r];
 
 			int operators = 5;
