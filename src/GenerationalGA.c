@@ -151,8 +151,8 @@ bool update_times(Rota *rota, int p){
  * Então os tempos da rota são determinados sequencialmente à partir do ponto anterior.
  */
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
-
 	if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0) {
+		printf("Parâmetros inválidos\n");
 		return false;
 	}
 
@@ -167,18 +167,18 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	int ultimaPos = ROTA_CLONE->length-1;
 	//Empurra todo mundo depois da posição de inserção
 	for (int i = ultimaPos; i >= posicao_insercao; i--){
-		ROTA_CLONE->list[i+1].is_source = ROTA_CLONE->list[i].is_source;
-		ROTA_CLONE->list[i+1].offset = ROTA_CLONE->list[i].offset;
-		ROTA_CLONE->list[i+1].r = ROTA_CLONE->list[i].r;
-		ROTA_CLONE->list[i+1].service_time = ROTA_CLONE->list[i].service_time;
+		ROTA_CLONE->list[i+1] = ROTA_CLONE->list[i];
 	}
-	//Insere o conteúdo do novo carona
-	ROTA_CLONE->list[posicao_insercao].r = carona;
-	ROTA_CLONE->list[posicao_insercao].is_source = true;
+
 	ant = &ROTA_CLONE->list[posicao_insercao-1];
 	atual = &ROTA_CLONE->list[posicao_insercao];
 	next = &ROTA_CLONE->list[posicao_insercao+1];
+
+	atual->r = carona;
+	atual->is_source = true;
+	atual->offset = offset;
 	atual->service_time = calculate_service_time(atual, ant);
+
 	nextTime = calculate_service_time(next, atual);
 	PF = nextTime - next->service_time;
 	if (PF > 0) {
@@ -197,18 +197,17 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 
 	//Empurra todo mundo depois da posição do offset
 	for (int i = ultimaPos+1; i >= posicao_insercao + offset; i--){
-		ROTA_CLONE->list[i+1].is_source = ROTA_CLONE->list[i].is_source;
-		ROTA_CLONE->list[i+1].offset = ROTA_CLONE->list[i].offset;
-		ROTA_CLONE->list[i+1].r = ROTA_CLONE->list[i].r;
-		ROTA_CLONE->list[i+1].service_time = ROTA_CLONE->list[i].service_time;
+		ROTA_CLONE->list[i+1] = ROTA_CLONE->list[i];
 	}
-	//Insere o conteúdo do destino do carona
-	ROTA_CLONE->list[posicao_insercao+offset].r = carona;
-	ROTA_CLONE->list[posicao_insercao+offset].is_source = false;
 	ant = &ROTA_CLONE->list[posicao_insercao+offset-1];
 	atual = &ROTA_CLONE->list[posicao_insercao+offset];
 	next = &ROTA_CLONE->list[posicao_insercao+offset+1];
+
+	atual->r = carona;
+	atual->is_source = false;
+	atual->offset = 0;
 	atual->service_time = calculate_service_time(atual, ant);
+
 	nextTime = calculate_service_time(next, atual);
 	PF = nextTime - next->service_time;
 	if (PF > 0) {
@@ -243,7 +242,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 
 	if (isRotaValida && inserir_de_fato){
 		carona->matched = true;
-		//carona->id_rota_match = ROTA_CLONE->id;
+		carona->id_rota_match = ROTA_CLONE->id;
 		clone_rota(ROTA_CLONE, rota);
 	}
 	else{
@@ -362,13 +361,14 @@ void insere_carona_aleatoria_rota(Rota* rota){
 		index_array_caronas_inserir[l] = l;
 	}
 
-	//int qtd_caronas_inserir = VEHICLE_CAPACITY;
 	shuffle(index_array_caronas_inserir, qtd_caronas_inserir);
 
 	for (int z = 0; z < qtd_caronas_inserir; z++){
 		Request * carona = request->matchable_riders_list[index_array_caronas_inserir[z]];
 		int posicao_inicial = get_random_int(1, rota->length-1);
 		int offset = 1;//TODO, variar o offset
+		if (carona->driver)
+			printf("Problema\n");
 		if (!carona->matched)
 			insere_carona_rota(rota, carona, posicao_inicial, offset, true);
 	}
