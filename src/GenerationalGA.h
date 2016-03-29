@@ -15,7 +15,7 @@
 typedef struct Request{
 	bool driver;//true -driver, false -rider
 	bool matched;//true se for um carona já combinado
-	int id_rota_match;//se for um carona, informa o id da rota que faz parte
+	//int id_rota_match;//se for um carona, informa o id da rota que faz parte
 	int id;
 	double request_arrival_time;//A hora em que esse request foi descoberto (desconsiderado pq o problema é estático)
 	double service_time_at_source;//Tempo gasto para atender o source (Diferente da HORA em que chega no source)
@@ -63,8 +63,8 @@ typedef struct Individuo{
 	Rota * cromossomo;
 	int size;//tamanho da lista de rotas
 	double objetivos[4];
-
 	double objective_function;
+	int id;
 }Individuo;
 
 /*Os indivíduos são armazenados no heap pra
@@ -112,7 +112,7 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 void empty_front_list(Fronts * f);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
-void repair(Individuo *offspring, Graph *g, int position);
+void repair(Individuo *offspring, Graph *g);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
 bool push_backward(Rota * rota, int position);
 bool push_forward(Rota * rota, int position, double pushf);

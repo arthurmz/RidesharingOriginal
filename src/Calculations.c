@@ -7,6 +7,14 @@
 
 #include "Calculations.h"
 #include <math.h>
+#include <stdlib.h>
+
+
+/**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
+int get_random_int(int minimum_number, int max_number){
+	int modulo = max_number + 1 - minimum_number;
+	return minimum_number + (rand() % modulo);
+}
 
 double distancia_percorrida(Rota * rota){
 	double accDistance =0;

@@ -70,6 +70,7 @@ Population *generate_random_population(int size, Graph *g, bool insereCaronasAle
 	for (int i = 0; i < size; i++){//Pra cada um dos indivíduos idv
 		shuffle(index_array_drivers,g->drivers);
 		Individuo *idv = generate_random_individuo(g, insereCaronasAleatorias);
+		idv->id = p->size;
 		p->list[p->size++] = idv;
 	}
 	return p;
@@ -93,6 +94,8 @@ void copy_rota(Individuo * origin, Individuo * destiny, int start, int end){
  * Para manter intacta a original, em caso da rota
  * clonada não servir*/
 void clone_rota(Rota * rota, Rota *cloneRota){
+	if (rota == cloneRota) return;
+
 	cloneRota->id = rota->id;
 	cloneRota->capacity = rota->capacity;
 	cloneRota->length = rota->length;
@@ -291,5 +294,73 @@ void fill_array(int * array, int size){
 	for (int i = 0; i < size; i++){
 		array[i] = i;
 	}
+}
+
+bool find_bug_population(Population * p, int quemChama){
+	for (int x = 0; x < p->size; x++) {
+		Individuo * offspring = p->list[x];
+
+		for (int q = 0; q < offspring->size; q++) {
+			Rota *rota = &offspring->cromossomo[q];
+
+			Request * rq = NULL;
+			int acc = 0;
+			for (int k = 0; k < rota->length; k++){
+				if (rq == NULL){
+					rq = rota->list[k].r;
+					continue;
+				}
+				if (rota->list[k].r != rq){
+					rq = rota->list[k].r;
+					acc = 0;
+				}
+				else if (rota->list[k].r == rq){
+					acc++;
+				}
+
+				if (acc >= 2){
+					printf("ENCONTROU ERRO NA ROTA: %d, quemChama: %d\n",rota->id, quemChama);
+					return true;
+				}
+			}
+
+		}
+
+	}
+	return false;
+}
+
+int find_bug_cromossomo(Individuo *offspring, Graph *g, int quemChama){
+	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
+		Rota *rota = &offspring->cromossomo[i];
+		bool achou = find_bug_rota(rota, quemChama);
+		if (achou) return i;
+	}
+	return -200;
+}
+
+
+bool find_bug_rota(Rota * rota, int quemChama){
+	Request * rq = NULL;
+	int acc = 0;
+	for (int i = 0; i < rota->length; i++){
+		if (rq == NULL){
+			rq = rota->list[i].r;
+			continue;
+		}
+		if (rota->list[i].r != rq){
+			rq = rota->list[i].r;
+			acc = 0;
+		}
+		else if (rota->list[i].r == rq){
+			acc++;
+		}
+
+		if (acc >= 2){
+			printf("ENCONTROU ERRO NA ROTA: %d, quemChama: %d\n",rota->id, quemChama);
+			return true;
+		}
+	}
+	return false;
 }
 
