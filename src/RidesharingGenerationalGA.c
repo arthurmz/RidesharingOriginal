@@ -43,7 +43,8 @@ void setup_matchable_riders(Graph * g){
 		for (int j = g->drivers; j < g->total_requests; j++){
 
 			Request * carona = &g->request_list[j];
-
+			if (fig_bug_rota2(rota))
+				printf("achou antes 50fx\n");
 			if (insere_carona_rota(rota, carona, 1, 1, false) ){
 				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
 			}

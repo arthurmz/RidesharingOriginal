@@ -364,3 +364,51 @@ bool find_bug_rota(Rota * rota, int quemChama){
 	return false;
 }
 
+
+
+bool find_bug_pop2(Population * parents){
+	for (int i = 0; i < parents->size; i++){
+		if (find_bug_idv(parents->list[i]))
+			return true;
+	}
+	return false;
+}
+
+
+bool find_bug_idv(Individuo * idv){
+	for (int i = 0; i < idv->size; i++){
+		if (fig_bug_rota2(&idv->cromossomo[i]))
+			return true;
+	}
+	return false;
+}
+
+
+bool fig_bug_rota2(Rota * rota){
+	int src = 0;
+	int dest = 0;
+	Service * listSources[rota->length];
+	Service * listDestinations[rota->length];
+	bool * matches[rota->length];
+	for (int i = 0; i < rota->length; i++){
+		listSources[i] = NULL;
+		listDestinations[i] = NULL;
+		matches[i] = false;
+	}
+
+	for (int i = 0; i < rota->length; i++){
+		Service * sv = &rota->list[i];
+
+		if (sv->is_source){
+			listSources[src++] = sv;
+		}
+		else{
+			listDestinations[dest++] = sv;
+		}
+	}
+
+	if (src != dest)
+		return true;
+	return false;
+}
+

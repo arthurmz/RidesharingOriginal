@@ -33,5 +33,8 @@ void fill_array(int * array, int size);
 bool find_bug_rota(Rota * rota, int quemChama);
 int find_bug_cromossomo(Individuo *offspring, Graph *g, int quemChama);
 bool find_bug_population(Population * p, int quemChama);
+bool fig_bug_rota2(Rota * rota);
+bool find_bug_idv(Individuo * idv);
+bool find_bug_pop2(Population * parents);
 
 #endif /* HELPER_H_ */

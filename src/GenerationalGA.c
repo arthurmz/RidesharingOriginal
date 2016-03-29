@@ -151,10 +151,21 @@ bool update_times(Rota *rota, int p){
  * Então os tempos da rota são determinados sequencialmente à partir do ponto anterior.
  */
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
+	if (fig_bug_rota2(rota))
+		printf("achou antes 0000\n");
+
 	if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0) {
 		printf("Parâmetros inválidos\n");
 		return false;
 	}
+
+	/*for (int g = 0; g < rota->length; g++){
+		if (rota->list[g].r == carona)
+			printf("**********tentando inserir a porra da carona que já tem match1*******\n");
+	}*/
+
+	if (fig_bug_rota2(rota))
+		printf("achou antes1\n");
 
 	clone_rota(rota, ROTA_CLONE);
 	bool isRotaValida = false;
@@ -249,21 +260,35 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		carona->matched = false;
 	}
 
+
+	bool a = fig_bug_rota2(rota);
+	if (a)
+		printf("achou antes2\n");
+
+	/*for (int g = 0; g < rota->length; g++){
+		if (rota->list[g].r == carona)
+			printf("**********tentando inserir a porra da carona que já tem match2*******\n");
+	}*/
+
 	return isRotaValida;
 }
 
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int quemChama){
-	//find_bug_rota(rota, 1);
-	if (posicao_insercao > rota->length-2 || posicao_insercao <= 0) {
+	if (posicao_insercao > rota->length-2 || posicao_insercao <= 0 || rota->length < 4 || !rota->list[posicao_insercao].is_source) {
 		return 0;
 	}
 
 	int offset = 1;
 	for (int k = posicao_insercao+1; k < rota->length; k++){//encontrando o offset
+		bool a = false;
+		bool b = false;
+		a = find_bug_rota(rota, 1);
 		if (rota->list[k].is_source && rota->list[posicao_insercao].r == rota->list[k].r){
 			printf("algo de errado muito errado aconteceu: %d\n", quemChama);
-			//find_bug_rota(rota, 2);
+			b = true;
 		}
+		if (!a && b)
+			printf("muito louco\n");
 		if (rota->list[posicao_insercao].r == rota->list[k].r && !rota->list[k].is_source)
 			break;
 		offset++;
@@ -350,6 +375,8 @@ double evaluate_objective_functions(Individuo *idv, Graph *g){
 /*Insere uma quantidade variável de caronas na rota informada
  * Utilizado na geração da população inicial, e na reparação dos indivíduos quebrados*/
 void insere_carona_aleatoria_rota(Rota* rota){
+	if (fig_bug_rota2(rota))
+			printf("achou antes 1x\n");
 
 	Request * request = &g->request_list[rota->id];
 
@@ -357,20 +384,24 @@ void insere_carona_aleatoria_rota(Rota* rota){
 	if (qtd_caronas_inserir == 0) return;
 	/*Configurando o index_array usado na aleatorização
 	 * da ordem de leitura dos caronas*/
-	for (int l = 0; l < qtd_caronas_inserir; l++){
-		index_array_caronas_inserir[l] = l;
-	}
+	//for (int l = 0; l < qtd_caronas_inserir; l++){
+		//index_array_caronas_inserir[l] = l;
+	//}
 
-	shuffle(index_array_caronas_inserir, qtd_caronas_inserir);
+	//shuffle(index_array_caronas_inserir, qtd_caronas_inserir);
 
 	for (int z = 0; z < qtd_caronas_inserir; z++){
-		Request * carona = request->matchable_riders_list[index_array_caronas_inserir[z]];
+		int p =index_array_caronas_inserir[z];
+		Request * carona = request->matchable_riders_list[z];
 		int posicao_inicial = get_random_int(1, rota->length-1);
 		int offset = 1;//TODO, variar o offset
 		if (carona->driver)
 			printf("Problema\n");
-		if (!carona->matched)
+		if (!carona->matched){
+			if (fig_bug_rota2(rota))
+					printf("achou antes 0fx\n");
 			insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+		}
 	}
 }
 
@@ -407,9 +438,20 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
 		//find_bug_cromossomo(offspring1, g, 5);
 		//find_bug_cromossomo(offspring2, g, 6);
 
+		if (find_bug_idv(parent1))
+			printf("achou antes meste-kame\n");
+
+		if (find_bug_idv(offspring2))
+			printf("achou antes ramurabi\n");
 		copy_rota(parent2, offspring1, 0, crossoverPoint);
+		if (find_bug_idv(offspring2))
+			printf("achou antes buma\n");
 		copy_rota(parent1, offspring1, crossoverPoint, rotaSize);
+		if (find_bug_idv(offspring2))
+			printf("achou antes kami-sama\n");
 		copy_rota(parent1, offspring2, 0, crossoverPoint);
+		if (find_bug_idv(offspring2))
+			printf("achou antes dendei\n");
 		copy_rota(parent2, offspring2, crossoverPoint, rotaSize);
 
 		//find_bug_cromossomo(offspring1, g, 7);
@@ -425,13 +467,21 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
 
 		clean_riders_matches(g);
 		shuffle(index_array, g->riders);
+		if (find_bug_idv(offspring1))
+			printf("achou antes goku\n");
 		repair(offspring1, g);
 
 		//find_bug_cromossomo(offspring1, g, 11);
 		//find_bug_cromossomo(offspring2, g, 12);
 
+		if (find_bug_idv(offspring2))
+			printf("achou antes kuririn\n");
 		clean_riders_matches(g);
+		if (find_bug_idv(offspring2))
+			printf("achou antes pikachu\n");
 		shuffle(index_array, g->riders);
+		if (find_bug_idv(offspring2))
+			printf("achou antes goten\n");
 		repair(offspring2, g);
 
 		//find_bug_cromossomo(offspring1, g, 13);
@@ -456,10 +506,12 @@ void repair(Individuo *offspring, Graph *g){
 	//find_bug_cromossomo(offspring, g, 20);
 	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
 		Rota *rota = &offspring->cromossomo[i];
+		if (fig_bug_rota2(rota))
+			printf("achou antes naruto\n");
 		//find_bug_cromossomo(offspring, g, 21);
 
 		int j = 0;
-		while (j < rota->length-2){//pra cada um dos services SOURCES na rota
+		while (j < rota->length-1){//pra cada um dos services SOURCES na rota
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
 			//find_bug_cromossomo(offspring, g, 22);
@@ -479,6 +531,8 @@ void repair(Individuo *offspring, Graph *g){
 			j++;
 		}
 		//find_bug_cromossomo(offspring, g, 29);
+		if (fig_bug_rota2(rota))
+				printf("achou antes inuy\n");
 		insere_carona_aleatoria_rota(rota);
 		//int a = find_bug_cromossomo(offspring, g, 30);
 		//if (a > 0)
@@ -526,6 +580,8 @@ void transfer_rider(Individuo * ind, Graph * g){
 	if (ok){
 		int posicao_inserir = get_random_int(1, rotaInserir->length-2);
 		caronaInserir->matched = false;
+		if (fig_bug_rota2(rotaInserir))
+			printf("achou antes 2fx\n");
 		bool inseriu = insere_carona_rota(rotaInserir, caronaInserir, posicao_inserir, 1, true );
 
 		if (inseriu){
@@ -540,13 +596,39 @@ void transfer_rider(Individuo * ind, Graph * g){
 	}
 }
 
+
+/** O bug mais difícil de descobrir:
+ * get_random_int retornava qualquer coisa dentre o
+ * primeiro carona e o ultimo source de carona.
+ * mas se vc tem a seguinte rota
+ * M C+ C+ C+ C+ M-
+ *
+ * ele poderia escolher o valor 3, que é um DESTINO do carona
+ * A solução: além de adicionar uma verificação da posição de remoção do
+ * desfaz_insercao_carona_rota, é fazer um mecanismo de buscar números aleatórios
+ * ímpares.
+ *
+ */
 bool remove_insert(Rota * rota){
+	if (fig_bug_rota2(rota))
+		printf("achou antes juju\n");
 	if (rota->length < 4) return false;
-	int position = get_random_int(1, rota->length-3);
+	if (fig_bug_rota2(rota))
+		printf("achou antes salimeni\n");
+	//int position = get_random_int(1, rota->length-3);
+	int position = get_random_odd_int(1, rota->length-3);
+	Request * carona = rota->list[position].r;
+	if (fig_bug_rota2(rota))
+		printf("achou antes coelhinha\n");
 	int offset = desfaz_insercao_carona_rota(rota, position, 3);
-	//push_backward(rota, position);
-	//push_backward(rota, offset);
-	//insere_carona_aleatoria_rota(rota);
+	carona->matched = false;
+	if (fig_bug_rota2(rota))
+		printf("achou antes gueros\n");
+	push_backward(rota, position);
+	push_backward(rota, offset);
+	//insere_carona_aleatoria_rota(rota); //Descomentando aqui ainda dá bug.
+	if (fig_bug_rota2(rota))
+		printf("achou antes final frontier\n");
 	return true;
 }
 
@@ -672,17 +754,31 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 	offspring->size = 0;//Tamanho = 0, mas considera todos já alocados
 	int i = 0;
 	while (offspring->size < parents->size){
-
+		//if(find_bug_pop2(parents))
+			//printf("achou antes too mae toe\n");
 		Individuo *parent1 = tournamentSelection(parents, g);
 		Individuo *parent2 = tournamentSelection(parents, g);
 
 		Individuo *offspring1 = offspring->list[i++];
 		Individuo *offspring2 = offspring->list[i];
-
+		if (find_bug_idv(parent1))
+			printf("achou antes cell\n");
 		crossover(parent1, parent2, offspring1, offspring2, g, crossoverProbability);
+		if (find_bug_idv(offspring1))
+			printf("achou antes yougi-oh\n");
+		if (find_bug_idv(offspring2))
+		printf("achou antes the WIZARD\n");
 
 		mutation(offspring1, g, mutationProbability);
+		if (find_bug_idv(offspring1))
+			printf("achou antes gunsroses\n");
+		if (find_bug_idv(offspring2))
+			printf("achou antes slayer\n");
 		mutation(offspring2, g, mutationProbability);
+		if (find_bug_idv(offspring1))
+			printf("achou antes death illustrated\n");
+		if (find_bug_idv(offspring2))
+			printf("achou antes kraftweek\n");
 		offspring->size += 2;
 	}
 }
