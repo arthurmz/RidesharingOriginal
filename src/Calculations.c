@@ -14,7 +14,7 @@
  * ambos min e max tem que ser par*/
 inline int get_random_odd_int(int minimum_number, int max_number){
 	int r = get_random_int(minimum_number, max_number);
-	if (r % 2 != 0)
+	if (r % 2 == 0)
 		r++;//Garantido ser <= max. pois de fosse igual, seria par!
 	return r;
 }

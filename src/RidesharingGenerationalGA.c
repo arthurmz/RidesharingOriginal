@@ -43,8 +43,6 @@ void setup_matchable_riders(Graph * g){
 		for (int j = g->drivers; j < g->total_requests; j++){
 
 			Request * carona = &g->request_list[j];
-			if (fig_bug_rota2(rota))
-				printf("achou antes 50fx\n");
 			if (insere_carona_rota(rota, carona, 1, 1, false) ){
 				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
 			}
@@ -133,6 +131,8 @@ int main(int argc,  char** argv){
 	Population * children = generate_random_population(POPULATION_SIZE, g, false);
 	evaluate_objective_functions_pop(parents, g);
 
+	clean_riders_matches(g);
+
 	int i = 0;
 	while(i < ITERATIONS){
 		printf("Iteracao %d...\n", i);
@@ -157,9 +157,7 @@ int main(int argc,  char** argv){
 	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 	printf("Seed: %u\n", seed);
 
-
 	print_to_file_decision_space(children,g,seed);
-
 	dealoc_full_population(parents);
 	dealoc_full_population(children);
 	//dealoc_empty_population(big_population);

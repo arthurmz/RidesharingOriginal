@@ -112,7 +112,7 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 void empty_front_list(Fronts * f);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
-void repair(Individuo *offspring, Graph *g);
+void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
 bool push_backward(Rota * rota, int position);
 bool push_forward(Rota * rota, int position, double pushf);

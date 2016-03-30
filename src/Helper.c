@@ -360,6 +360,10 @@ bool find_bug_rota(Rota * rota, int quemChama){
 			printf("ENCONTROU ERRO NA ROTA: %d, quemChama: %d\n",rota->id, quemChama);
 			return true;
 		}
+		if (i > 0 && i < rota->length-2 && !rota->list[i].r->matched){
+			printf("matched eh false\n");
+			return true;
+		}
 	}
 	return false;
 }
@@ -409,6 +413,6 @@ bool fig_bug_rota2(Rota * rota){
 
 	if (src != dest)
 		return true;
-	return false;
+	return find_bug_rota(rota, 969696);
 }
 
