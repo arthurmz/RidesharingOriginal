@@ -103,7 +103,7 @@ bool update_times(Rota *rota, int p);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Rota* rota);
-int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao, int quemChama);
+int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
 double evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);

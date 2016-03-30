@@ -13,9 +13,10 @@
 #include "GenerationalGA.h"
 #include "Calculations.h"
 
-
+/** Rota usada para a cópia em operações de mutação etc.*/
 Rota *ROTA_CLONE;
 
+/** Aloca a ROTA_CLONE global */
 void malloc_rota_clone(){
 	/*Criando uma rota para cópia e validação das rotas*/
 	ROTA_CLONE = (Rota*) calloc(1, sizeof(Rota));
@@ -119,9 +120,10 @@ void sort_by_objective(Population *pop, int obj){
  * os tempos da rota à partir do ponto P inserido.
  *
  * é uma espécie de push_forward sem a aleatoriedade
+ *
+ * NÃO ESTÁ SENDO USADO.
  */
 bool update_times(Rota *rota, int p){
-
 	for (int i = p; i >= rota->length; i++){
 		Service *anterior = &rota->list[i-1];
 		Service *atual = &rota->list[i];
@@ -140,7 +142,6 @@ bool update_times(Rota *rota, int p){
 			atual->service_time = at;
 		}
 	}
-
 	return true;
 }
 
@@ -149,17 +150,18 @@ bool update_times(Rota *rota, int p){
  * O método de inserção do algoritmo original é o seguinte:
  * Em uma rota aleatória, e com uma carona aleatória a adicionar, determinamos o ponto P de inserção.
  * Então os tempos da rota são determinados sequencialmente à partir do ponto anterior.
+ *
+ * Rota: A rota para inserir.
+ * Carona: A carona para inserir
+ * Posicao_insercao: uma posição que deve estar numa posição válida
+ * offset: distância do source pro destino. posicao_insercao+offset < rota->length
+ * Inserir_de_fato: útil para determinar se a rota acomoda o novo carona. se falso nada faz com o carona nem a rota.
  */
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
-	if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0) {
+	if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0 || posicao_insercao + offset > rota->length) {
 		printf("Parâmetros inválidos\n");
 		return false;
 	}
-
-	/*for (int g = 0; g < rota->length; g++){
-		if (rota->list[g].r == carona)
-			printf("**********tentando inserir a porra da carona que já tem match1*******\n");
-	}*/
 
 	clone_rota(rota, ROTA_CLONE);
 	bool isRotaValida = false;
@@ -250,47 +252,28 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	if (isRotaValida && inserir_de_fato){
 		carona->matched = true;
 		carona->id_rota_match = ROTA_CLONE->id;
-
 		clone_rota(ROTA_CLONE, rota);
-
 	}
-	else{
-
-		carona->matched = false;
-
-	}
-
-
-
-	/*for (int g = 0; g < rota->length; g++){
-		if (rota->list[g].r == carona)
-			printf("**********tentando inserir a porra da carona que já tem match2*******\n");
-	}*/
 
 	return isRotaValida;
 }
 
-int desfaz_insercao_carona_rota(Rota *rota, int posicao_remocao, int quemChama){
+
+/** Remove o carona que tem source na posicção Posicao_remocao
+ * Retorna o valor do offset para encontrar o destino do carona removido
+ * Retorna 0 caso não seja possível fazer a remoção do carona
+ */
+int desfaz_insercao_carona_rota(Rota *rota, int posicao_remocao){
 	if (posicao_remocao > rota->length-2 || posicao_remocao <= 0 || rota->length < 4 || !rota->list[posicao_remocao].is_source) {
 		return 0;
 	}
 
 	int offset = 1;
 	for (int k = posicao_remocao+1; k < rota->length; k++){//encontrando o offset
-		bool a = false;
-		bool b = false;
-		if (rota->list[k].is_source && rota->list[posicao_remocao].r == rota->list[k].r){
-			printf("algo de errado muito errado aconteceu: %d\n", quemChama);
-			b = true;
-		}
-		if (!a && b)
-			printf("muito louco\n");
 		if (rota->list[posicao_remocao].r == rota->list[k].r && !rota->list[k].is_source)
 			break;
 		offset++;
 	}
-
-	if (offset <= 0) return 0;
 
 	for (int i = posicao_remocao; i < rota->length-1; i++){
 		rota->list[i] = rota->list[i+1];
@@ -455,13 +438,20 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
  * Atualiza o grafo com os matches do indivíduo atual*/
 void evaluate_riders_matches(Individuo *ind, Graph * g){
 	clean_riders_matches(g);
-	repair(ind, g, false);
+	for (int i = 0; i < ind->size; i++){//Pra cada rota do idv
+		Rota *rota = &ind->cromossomo[i];
+		for (int j = 1; j < rota->length-1; j++){
+			rota->list[j].r->matched = true;
+		}
+	}
+	//repair(ind, g, false);
 }
 
 /*Remove todas as caronas que quebram a validação
  * Tenta inserir novas
  * Utiliza graph pra saber quem já fez match.
- * No final, os matches são determinados.
+ * No final da execução os matches essão determinados.
+ * insereCaronaAleatoria: Se falso então não adiciona novos caronas
  * */
 void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 	//find_bug_cromossomo(offspring, g, 20);
@@ -477,20 +467,15 @@ void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
 			if ((rota->list[j].is_source && rota->list[j].r->matched && !rota->list[j].r->driver)){//nunca será driver
-				desfaz_insercao_carona_rota(rota, j, 1);
+				desfaz_insercao_carona_rota(rota, j);
 			}
 			if (!rota->list[j].r->driver){//nunca será driver
 				rota->list[j].r->matched = true;
 			}
 			j++;
 		}
-		if (fig_bug_rota2(rota))
-			printf("Outro bug real\n");
 		if (insereCaronaAleatoria)
 			insere_carona_aleatoria_rota(rota);
-		if (fig_bug_rota2(rota))
-			printf("Mais um bug real\n");
-
 	}
 }
 
@@ -542,7 +527,7 @@ void transfer_rider(Individuo * ind, Graph * g){
 				if ( rotaRemover->list[position].r == caronaInserir )
 					break;
 			}
-			desfaz_insercao_carona_rota(rotaRemover,position, 2);//tudo errado
+			desfaz_insercao_carona_rota(rotaRemover,position);//tudo errado
 		}
 		caronaInserir->matched = true;
 	}
@@ -564,26 +549,35 @@ void transfer_rider(Individuo * ind, Graph * g){
  * Outro bug complicado: Remove_insert necessita que os matches das
  * rotas estejam determinados. para poder saber de onde tirar e onde colocar.
  *
+ *
+ * Update final:
+ * As posições podem sim ser ímpares.
+ * Retorna false se o resultado for inválido
+ * (Seria um erro pois o push_backward é esperado gerar alteraçãos válidas)
+ *
  */
 bool remove_insert(Rota * rota){
 	clone_rota(rota, ROTA_CLONE);
-	if (rota->length < 4) return false;
-	int positionSources[(rota->length-2)/2];
+	if (ROTA_CLONE->length < 4) return false;
+	int positionSources[(ROTA_CLONE->length-2)/2];
 	//Procurando as posições dos sources
 	int k = 0;
-	for (int i = 1; i < rota->length-2; i++){
-		if (rota->list[i].is_source)
+	for (int i = 1; i < ROTA_CLONE->length-2; i++){
+		if (ROTA_CLONE->list[i].is_source)
 			positionSources[k++] = i;
 	}
-	int position = positionSources[rand() % (rota->length-2)/2];
-	//int position = get_random_odd_int(1, rota->length-3);
-	Request * carona = rota->list[position].r;
-	int offset = desfaz_insercao_carona_rota(rota, position, 3);
+	int position = positionSources[rand() % (ROTA_CLONE->length-2)/2];
+	Request * carona = ROTA_CLONE->list[position].r;
+	int offset = desfaz_insercao_carona_rota(ROTA_CLONE, position);
 	carona->matched = false;
-	push_backward(rota, position);
-	push_backward(rota, offset);
-	insere_carona_aleatoria_rota(rota); //Descomentando aqui ainda dá bug.
-	return true;
+	push_backward(ROTA_CLONE, position);
+	push_backward(ROTA_CLONE, position+offset);//Erro aqui?
+	insere_carona_aleatoria_rota(ROTA_CLONE);
+	if (is_rota_valida(ROTA_CLONE)){
+		clone_rota(ROTA_CLONE, rota);
+		return true;
+	}
+	return false;
 }
 
 /*Tenta empurar os services uma certa quantidade de tempo
@@ -667,7 +661,6 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 
 		if (accept < mutationProbability){
 			evaluate_riders_matches(ind, g);//Porque aqui dentro melhora??
-
 			Rota * rota  = &ind->cromossomo[r];
 
 			int operators = 5;

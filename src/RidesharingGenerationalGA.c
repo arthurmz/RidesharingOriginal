@@ -37,11 +37,8 @@ void setup_matchable_riders(Graph * g){
 
 	for (int i = 0; i < g->drivers; i++){
 		Request * motoristaGrafo = &g->request_list[i];
-
 		Rota * rota = &individuoTeste->cromossomo[i];
-
 		for (int j = g->drivers; j < g->total_requests; j++){
-
 			Request * carona = &g->request_list[j];
 			if (insere_carona_rota(rota, carona, 1, 1, false) ){
 				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
@@ -153,7 +150,6 @@ int main(int argc,  char** argv){
 	sort_by_objective(children, RIDERS_UNMATCHED);
 	print(children);
 	printf("Número de riders combinados: %f\n", g->riders - children->list[0]->objetivos[3]);
-
 	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 	printf("Seed: %u\n", seed);
 

@@ -10,14 +10,6 @@
 #include <stdlib.h>
 
 
-/**Retorna um número inteiro ÍMPAR entre minimum_number e maximum_number, inclusive
- * ambos min e max tem que ser par*/
-inline int get_random_odd_int(int minimum_number, int max_number){
-	int r = get_random_int(minimum_number, max_number);
-	if (r % 2 == 0)
-		r++;//Garantido ser <= max. pois de fosse igual, seria par!
-	return r;
-}
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
 inline int get_random_int(int minimum_number, int max_number){
@@ -25,6 +17,7 @@ inline int get_random_int(int minimum_number, int max_number){
 	return minimum_number + (rand() % modulo);
 }
 
+/** Recebe uma rota e calcula a distância percorrida pelo motorista */
 double distancia_percorrida(Rota * rota){
 	double accDistance =0;
 	for (int i = 0; i < rota->length -1; i++){
@@ -51,6 +44,7 @@ double haversine_helper(double lat1, double lon1, double lat2, double lon2){
 	return R * c;
 }
 
+/** Distância entre os services */
 double haversine(Service *a, Service *b){
 	double lat1, long1, lat2, long2;
 	if (a->is_source){
