@@ -104,6 +104,31 @@ void clone_rota(Rota * rota, Rota *cloneRota){
 	}
 }
 
+/** Verifica se o carona informado existe na lista de caronas informados */
+bool contains(Request * motorista, Request *rider){
+	for (int i = 0; i < motorista->matchable_riders; i ++){
+		if (motorista->matchable_riders_list[i] == rider)
+			return true;
+	}
+	return false;
+}
+
+/** Retorna uma posição de carona aleatória
+ * da rota informada
+ */
+inline int get_random_carona_position(Rota * rota){
+	if (rota->length < 4) return -1;
+	int positionSources[(rota->length-2)/2];
+	//Procurando as posições dos sources
+	int k = 0;
+	for (int i = 1; i < rota->length-2; i++){
+		if (rota->list[i].is_source)
+			positionSources[k++] = i;
+	}
+	int position = positionSources[rand() % (rota->length-2)/2];
+	return position;
+}
+
 
 /*Aloca uma nova população de tamanho max_capacity
  * Cada elemento de list é um ponteiro pra indivíduo NÃO ALOCADO*/
