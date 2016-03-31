@@ -191,7 +191,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	if (PF > 0) {
 		next->service_time+= PF;
 		if (posicao_insercao+2 < ROTA_CLONE->length)
-			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+2, PF);
+			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+2, PF);// O next não tá sendo atualizado, verificar.
 		else
 			isRotaValida = true;
 	}
@@ -480,7 +480,31 @@ void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 }
 
 
-void swap_rider(){
+bool swap_rider(Rota * rota){
+	if (rota->length < 6) return false;
+	clone_rota(rota, ROTA_CLONE);
+	int ponto_swap = get_random_int(1, ROTA_CLONE->length-3);
+	Service service_temp = ROTA_CLONE->list[ponto_swap];
+	ROTA_CLONE->list[ponto_swap] = ROTA_CLONE->list[ponto_swap+1];
+	ROTA_CLONE->list[ponto_swap+1] = service_temp;
+
+	Service *ant = &ROTA_CLONE->list[ponto_swap-1];
+	Service *atual = &ROTA_CLONE->list[ponto_swap];
+	Service *next = &ROTA_CLONE->list[ponto_swap+1];
+
+	atual->service_time = calculate_service_time(atual, ant);
+	double nextTime = calculate_service_time(next, atual);
+
+	double PF = nextTime - next->service_time;
+
+	bool isRotaValida = push_forward(ROTA_CLONE, ponto_swap+1, PF);
+
+
+	if(isRotaValida && is_rota_valida(ROTA_CLONE)){
+		clone_rota(ROTA_CLONE, rota);
+		return true;
+	}
+	return false;
 
 }
 
@@ -493,28 +517,16 @@ void swap_rider(){
  * Tenta inserir o carona
  * Se conseguiu, remove o carona da rota original
  */
-bool transfer_rider(Individuo * ind, Graph * g){
+bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g){
 	Rota * rotaInserir = NULL;
-	Rota * rotaRemover = NULL;
 	Request * caronaInserir;
 
-	int pos;
 	//Procurando um carona qualquer
-	for (int i = 0; i < g->drivers; i++){
-		rotaRemover = &ind->cromossomo[i];
-		if (rotaRemover->length <= 2)
-			continue;
-		pos = get_random_carona_position(rotaRemover);
-		if (pos == -1)
-			return false;
-		else{
-			caronaInserir = rotaRemover->list[pos].r;
-			break;
-		}
-	}
-	//Se não achou, retorna
-	if (caronaInserir == NULL)
-		return false;
+	int pos = get_random_carona_position(rotaRemover);
+	if (pos == -1)
+		return false;//Se não achou, retorna
+	else
+		caronaInserir = rotaRemover->list[pos].r;
 
 	//Invalida o carona
 	caronaInserir->matched = false;
@@ -525,15 +537,17 @@ bool transfer_rider(Individuo * ind, Graph * g){
 		rotaInserir = &ind->cromossomo[i];
 		if (rotaInserir == rotaRemover)
 			continue;
-		if (contains(rotaInserir->list[0].r, caronaInserir))
-			conseguiu = insere_carona_rota(rotaInserir, caronaInserir, pos, 1, true);//TODO variar o offset
+		if (contains(rotaInserir->list[0].r, caronaInserir)){
+			int posicaoInserir = get_random_int(1, rotaInserir->length-1);
+			conseguiu = insere_carona_rota(rotaInserir, caronaInserir, posicaoInserir, 1, true);//TODO variar o offset
+		}
 		if (conseguiu)
 			break;
 	}
 
 	//Se conseguiu inserir, remove o carona do rotaRemover
 	if (conseguiu)
-		desfaz_insercao_carona_rota(rotaRemover,pos);//tudo errado
+		desfaz_insercao_carona_rota(rotaRemover,pos);
 	else
 		caronaInserir->matched = true;
 	return conseguiu;
@@ -688,11 +702,10 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 					ok = remove_insert(rota);
 					break;
 				case 3 :
-					ok = transfer_rider(ind, g);
+					ok = transfer_rider(rota,ind, g);
 					break;
 				case 4 :
-					//swap_rider();
-					ok = true;
+					ok = swap_rider(rota);
 					break;
 				}
 				index++;
