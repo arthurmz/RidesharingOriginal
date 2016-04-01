@@ -21,6 +21,7 @@ bool is_carga_dentro_limite(Rota *rota);
 bool is_distancia_motorista_respeitada(Rota * rota);
 bool is_tempo_respeitado(Rota *rota, int i, int j);
 bool is_tempos_respeitados(Rota *rota);
+bool is_ordem_respeitada(Rota * rota);
 bool is_rota_valida(Rota *rota);
 double get_earliest_time_service(Service * atual);
 double get_latest_time_service(Service * atual);

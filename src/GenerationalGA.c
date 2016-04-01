@@ -265,6 +265,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
  */
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_remocao){
 	if (posicao_remocao > rota->length-2 || posicao_remocao <= 0 || rota->length < 4 || !rota->list[posicao_remocao].is_source) {
+		printf("Erro ao desfazer a inserção\n");
 		return 0;
 	}
 
@@ -497,10 +498,14 @@ bool swap_rider(Rota * rota){
 
 	double PF = nextTime - next->service_time;
 
-	bool isRotaValida = push_forward(ROTA_CLONE, ponto_swap+1, PF);
+	bool ordemValida = is_ordem_respeitada(ROTA_CLONE);
+	if (!ordemValida)
+		printf("ueheueh\n");
+
+	bool isPushForwardValido = push_forward(ROTA_CLONE, ponto_swap+1, PF);
 
 
-	if(isRotaValida && is_rota_valida(ROTA_CLONE)){
+	if(ordemValida && isPushForwardValido && is_rota_valida(ROTA_CLONE)){
 		clone_rota(ROTA_CLONE, rota);
 		return true;
 	}

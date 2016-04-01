@@ -187,6 +187,39 @@ bool is_tempos_respeitados(Rota *rota){
 	return true;
 }
 
+/*Verifica se a ordem de inserção e remoção dos riders é respeitada
+ * Usar apenas no swap, pois só lá essa restrição pode ser quebrada*/
+bool is_ordem_respeitada(Rota * rota){
+	int existe(Request ** p, int alt, Request * content){
+		for (int i = 0; i < alt; i++){
+			if (p[i] == content)
+				return i;
+		}
+		return -1;
+	}
+
+	void remove(Request ** p, int alt, int pos){
+		for (int i = pos; i < alt; i++){
+			p[i] = p[i+1];
+		}
+	}
+
+	Request * pilha[rota->length];
+	int altura = 0;
+	for (int i = 0; i < rota->length; i++){//Pra cada um dos sources
+		Service *source = &rota->list[i];
+		int pos = existe(pilha, altura, source->r);
+		if(pos == -1){
+			pilha[altura++] = source->r;
+		}
+		else{
+			remove(pilha, altura, pos);
+			altura--;
+		}
+	}
+	return altura == 0;
+}
+
 
 
 /*Restrição 2 e 3 do artigo é garantida pois sempre que um carona é adicionado

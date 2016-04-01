@@ -119,6 +119,7 @@ int main(int argc,  char** argv){
 	initialize_mem(g);
 	setup_matchable_riders(g);
 	print_qtd_matches_minima(g);
+	printf("Seed: %u\n", seed);
 
 
 	/*=====================Início do NSGA-II============================================*/
@@ -151,7 +152,6 @@ int main(int argc,  char** argv){
 	print(children);
 	printf("Número de riders combinados: %f\n", g->riders - children->list[0]->objetivos[3]);
 	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
-	printf("Seed: %u\n", seed);
 
 	print_to_file_decision_space(children,g,seed);
 	dealoc_full_population(parents);
