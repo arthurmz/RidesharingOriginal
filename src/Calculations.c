@@ -208,13 +208,14 @@ bool is_ordem_respeitada(Rota * rota){
 	int altura = 0;
 	for (int i = 0; i < rota->length; i++){//Pra cada um dos sources
 		Service *source = &rota->list[i];
-		int pos = existe(pilha, altura, source->r);
-		if(pos == -1){
+		if (source->is_source)
 			pilha[altura++] = source->r;
-		}
 		else{
-			remove(pilha, altura, pos);
-			altura--;
+			int pos = existe(pilha, altura, source->r);
+			if (pos != -1){
+				remove(pilha, altura, pos);
+				altura--;
+			}
 		}
 	}
 	return altura == 0;

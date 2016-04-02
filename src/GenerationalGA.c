@@ -499,13 +499,12 @@ bool swap_rider(Rota * rota){
 	double PF = nextTime - next->service_time;
 
 	bool ordemValida = is_ordem_respeitada(ROTA_CLONE);
-	if (!ordemValida)
-		printf("ueheueh\n");
+	if (!ordemValida) return false;
 
 	bool isPushForwardValido = push_forward(ROTA_CLONE, ponto_swap+1, PF);
+	if (isPushForwardValido) return false;
 
-
-	if(ordemValida && isPushForwardValido && is_rota_valida(ROTA_CLONE)){
+	if(is_rota_valida(ROTA_CLONE)){
 		clone_rota(ROTA_CLONE, rota);
 		return true;
 	}
@@ -689,32 +688,17 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 			Rota * rota  = &ind->cromossomo[r];
 
 			int operators = 5;
-			int index = 0;
 			int mutation_array[operators];
 			fill_array(mutation_array, operators);
 			shuffle(mutation_array, operators);
-			bool ok = false;
 
-			while (!ok && index < operators){
-				switch(mutation_array[index]){
-				case 0 :
-					ok = push_backward(rota, -1);
-					break;
-				case 1 :
-					ok = push_forward(rota, -1, -1);
-					break;
-				case 2 :
-					ok = remove_insert(rota);
-					break;
-				case 3 :
-					ok = transfer_rider(rota,ind, g);
-					break;
-				case 4 :
-					ok = swap_rider(rota);
-					break;
-				}
-				index++;
-			}
+			//Melhora a conversão e o tempo
+			push_backward(rota, -1)
+			||push_forward(rota, -1, -1)
+			||remove_insert(rota)
+			||transfer_rider(rota,ind, g)
+			||swap_rider(rota);
+
 		}
 	}
 }
