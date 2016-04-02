@@ -15,12 +15,20 @@
 
 /** Rota usada para a cópia em operações de mutação etc.*/
 Rota *ROTA_CLONE;
+Rota *ROTA_CLONE1;//Outros clones para não conflitar as cópias
+Rota *ROTA_CLONE2;
 
 /** Aloca a ROTA_CLONE global */
 void malloc_rota_clone(){
 	/*Criando uma rota para cópia e validação das rotas*/
 	ROTA_CLONE = (Rota*) calloc(1, sizeof(Rota));
 	ROTA_CLONE->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
+
+	ROTA_CLONE1 = (Rota*) calloc(1, sizeof(Rota));
+	ROTA_CLONE1->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
+
+	ROTA_CLONE2 = (Rota*) calloc(1, sizeof(Rota));
+	ROTA_CLONE2->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
 }
 
 /*Pra poder usar a função qsort com N objetivos,
@@ -372,11 +380,13 @@ void insere_carona_aleatoria_rota(Rota* rota){
 		int p = index_array_caronas_inserir[z];
 		Request * carona = request->matchable_riders_list[p];
 		int posicao_inicial = get_random_int(1, rota->length-1);
-		int offset = 1;//TODO, variar o offset
-		if (carona->driver)
-			printf("Problema\n");
+
 		if (!carona->matched){
-			insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+				//int offset = 1;//TODO, variar o offset
+				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+				if(inseriu) break;
+			}
 		}
 	}
 }
@@ -536,7 +546,7 @@ bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g){
 	caronaInserir->matched = false;
 
 	bool conseguiu = false;
-	//Buscando por uma carona que possa inserir{
+	//Buscando por uma rota que possa inserir
 	for (int i = 0; i < g->drivers; i++){
 		rotaInserir = &ind->cromossomo[i];
 		if (rotaInserir == rotaRemover)
@@ -553,7 +563,7 @@ bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g){
 	if (conseguiu)
 		desfaz_insercao_carona_rota(rotaRemover,pos);
 	else
-		caronaInserir->matched = true;
+		caronaInserir->matched = true;//Revalida o carona
 	return conseguiu;
 }
 
@@ -581,24 +591,26 @@ bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g){
  *
  */
 bool remove_insert(Rota * rota){
-	clone_rota(rota, ROTA_CLONE);
-	if (ROTA_CLONE->length < 4) return false;
-	int positionSources[(ROTA_CLONE->length-2)/2];
+	//Criando um clone local(como backup!!)
+
+	clone_rota(rota, ROTA_CLONE1);
+	if (ROTA_CLONE1->length < 4) return false;
+	int positionSources[(ROTA_CLONE1->length-2)/2];
 	//Procurando as posições dos sources
 	int k = 0;
-	for (int i = 1; i < ROTA_CLONE->length-2; i++){
-		if (ROTA_CLONE->list[i].is_source)
+	for (int i = 1; i < ROTA_CLONE1->length-2; i++){
+		if (ROTA_CLONE1->list[i].is_source)
 			positionSources[k++] = i;
 	}
-	int position = positionSources[rand() % (ROTA_CLONE->length-2)/2];
-	Request * carona = ROTA_CLONE->list[position].r;
-	int offset = desfaz_insercao_carona_rota(ROTA_CLONE, position);
+	int position = positionSources[rand() % (ROTA_CLONE1->length-2)/2];
+	Request * carona = ROTA_CLONE1->list[position].r;
+	int offset = desfaz_insercao_carona_rota(ROTA_CLONE1, position);
 	carona->matched = false;
-	push_backward(ROTA_CLONE, position);
-	push_backward(ROTA_CLONE, position+offset);//Erro aqui?
-	insere_carona_aleatoria_rota(ROTA_CLONE);
-	if (is_rota_valida(ROTA_CLONE)){
-		clone_rota(ROTA_CLONE, rota);
+	push_backward(ROTA_CLONE1, position);
+	push_backward(ROTA_CLONE1, position+offset);//Erro aqui?
+	insere_carona_aleatoria_rota(ROTA_CLONE1);
+	if (is_rota_valida(ROTA_CLONE1)){
+		clone_rota(ROTA_CLONE1, rota);
 		return true;
 	}
 	return false;

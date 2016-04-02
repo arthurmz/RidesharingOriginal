@@ -70,7 +70,8 @@ double haversine(Service *a, Service *b){
 /*Tempo em minutos*/
 double time_between_services(Service *a, Service *b){
 	double distance = haversine(a, b);
-	return distance / VEHICLE_SPEED * 60;
+	return distance;//Equivalente ao de baixo
+	//return distance / VEHICLE_SPEED * 60;
 }
 
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada
