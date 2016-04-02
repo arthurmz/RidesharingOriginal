@@ -470,17 +470,14 @@ void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 		Rota *rota = &offspring->cromossomo[i];
 
 		int j = 1;
-		while (j < rota->length-1){//pra cada um dos services SOURCES na rota
-			if (j % 2 == 0){
-				j++;
-				continue;
-			}
+		//pra cada um dos services SOURCES na rota
+		while (j < (rota->length -1) ) {
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
 			if ((rota->list[j].is_source && rota->list[j].r->matched && !rota->list[j].r->driver)){//nunca será driver
-				desfaz_insercao_carona_rota(rota, j);
+				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
 			}
-			if (!rota->list[j].r->driver){//nunca será driver
+			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
 				rota->list[j].r->matched = true;
 			}
 			j++;
