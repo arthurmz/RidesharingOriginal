@@ -83,7 +83,7 @@
 							<tool command="gcc -I. -std=c99 -lm -g -O0" id="cdt.managedbuild.tool.gnu.c.compiler.mingw.base.174824579" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.base">
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.765240072" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.1592996823" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.include.paths.1099940782" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.c.compiler.option.include.paths.1099940782" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="lm"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1934771592" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>

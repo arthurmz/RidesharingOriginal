@@ -114,8 +114,8 @@ void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
 void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
-bool push_backward(Rota * rota, int position);
-bool push_forward(Rota * rota, int position, double pushf);
+bool push_backward(Rota * rota, int position, bool manter_alteracoes);
+bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoes);
 
 
 int * index_array_riders;

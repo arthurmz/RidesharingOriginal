@@ -94,7 +94,10 @@ void copy_rota(Individuo * origin, Individuo * destiny, int start, int end){
  * Para manter intacta a original, em caso da rota
  * clonada não servir*/
 void clone_rota(Rota * rota, Rota *cloneRota){
-	if (rota == cloneRota) return;
+	if (rota == cloneRota) {
+		printf("bug\n");
+		return;
+	}
 
 	cloneRota->id = rota->id;
 	cloneRota->capacity = rota->capacity;

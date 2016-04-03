@@ -17,6 +17,7 @@
 Rota *ROTA_CLONE;
 Rota *ROTA_CLONE1;//Outros clones para não conflitar as cópias
 Rota *ROTA_CLONE2;
+Rota *ROTA_CLONE_PUSH;
 
 /** Aloca a ROTA_CLONE global */
 void malloc_rota_clone(){
@@ -29,6 +30,9 @@ void malloc_rota_clone(){
 
 	ROTA_CLONE2 = (Rota*) calloc(1, sizeof(Rota));
 	ROTA_CLONE2->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
+
+	ROTA_CLONE_PUSH = (Rota*) calloc(1, sizeof(Rota));
+	ROTA_CLONE_PUSH->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
 }
 
 /*Pra poder usar a função qsort com N objetivos,
@@ -154,10 +158,35 @@ bool update_times(Rota *rota, int p){
 }
 
 
-/**
+
+
+
+
+/**Minha dúvida sobre esse operador é:
+ * ele pega as posições de inserção P e seu offset, coloca na rota e
+ * recalcula todo mundo à partir do horário de saída do motorista?
+ * Pensando bem, o recálculo é desnecessário. já que
+ * A+A- segue a idéia do recalculo total
+ * A+1+1-A- vai ser inserido no seus tempos mais cedo
+ * A+1+1-2+2-A-, A rota vai ficar igual de A+ até 1-, o resto que vai sofrer push forward.
+ * Então a resposta é SIM, a operação de recalcular os tempos de todo mundo é equivalente à
+ * calcular a rota parcialmente do ponto P pra frente!
+ *
+ * A forma que está escrito dá a enteder que primeiro o ponto de inserção é adicionado,
+ * é feito o push forward, então o ponto de offset é adicionado.
+ * Esse é um bom ponto de melhoria, pois se o push forward de P+1 for maior que o necessário,
+ * a carona nesse canto podia ser válida e o algoritmo não pegou
+ * Ex: vou inserir o ponto Px, entre P0 e P1, e meu offset é 1
+ * PIOR QUE NÃO!!
+ * A menor distância entre Px e P1 é uma linha reta, exatamente o valor do harversine
+ * Então quando eu colocar o offset 1 entre Px e P1, P1 só pode sofrer um push forward >= 0, nunca MENOR.
+ *
+ * -------------------------------------------------------------------
  * O método de inserção do algoritmo original é o seguinte:
  * Em uma rota aleatória, e com uma carona aleatória a adicionar, determinamos o ponto P de inserção.
- * Então os tempos da rota são determinados sequencialmente à partir do ponto anterior.
+ * A idéia do operador de inserção original é de que a rota construída até o momento de
+ * 1 até p-1 não deve ser alterada.
+ * A hora de atendimento desse novo ponto P
  *
  * Rota: A rota para inserir.
  * Carona: A carona para inserir
@@ -199,7 +228,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	if (PF > 0) {
 		next->service_time+= PF;
 		if (posicao_insercao+2 < ROTA_CLONE->length)
-			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+2, PF);// O next não tá sendo atualizado, verificar.
+			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+2, PF, true);// O next não tá sendo atualizado, verificar.
 		else
 			isRotaValida = true;
 	}
@@ -207,8 +236,8 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		isRotaValida = true;
 	}
 	ROTA_CLONE->length++;
-	if (!isRotaValida)
-		return false;
+	//if (!isRotaValida) Só verifica a validade na segunda inserção
+		//return false;
 
 
 	//Empurra todo mundo depois da posição do offset
@@ -229,7 +258,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	if (PF > 0) {
 		next->service_time+= PF;
 		if (posicao_insercao+offset+2 < ROTA_CLONE->length){
-			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+offset+2, PF);
+			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+offset+2, PF, true);
 		}
 		else{
 			isRotaValida = true;
@@ -490,29 +519,29 @@ void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 
 bool swap_rider(Rota * rota){
 	if (rota->length < 6) return false;
-	clone_rota(rota, ROTA_CLONE);
-	int ponto_swap = get_random_int(1, ROTA_CLONE->length-3);
-	Service service_temp = ROTA_CLONE->list[ponto_swap];
-	ROTA_CLONE->list[ponto_swap] = ROTA_CLONE->list[ponto_swap+1];
+	clone_rota(rota, ROTA_CLONE1);
+	int ponto_swap = get_random_int(1, ROTA_CLONE1->length-3);
+	Service service_temp = ROTA_CLONE1->list[ponto_swap];
+	ROTA_CLONE->list[ponto_swap] = ROTA_CLONE1->list[ponto_swap+1];
 	ROTA_CLONE->list[ponto_swap+1] = service_temp;
 
-	Service *ant = &ROTA_CLONE->list[ponto_swap-1];
-	Service *atual = &ROTA_CLONE->list[ponto_swap];
-	Service *next = &ROTA_CLONE->list[ponto_swap+1];
+	Service *ant = &ROTA_CLONE1->list[ponto_swap-1];
+	Service *atual = &ROTA_CLONE1->list[ponto_swap];
+	Service *next = &ROTA_CLONE1->list[ponto_swap+1];
 
 	atual->service_time = calculate_service_time(atual, ant);
 	double nextTime = calculate_service_time(next, atual);
 
 	double PF = nextTime - next->service_time;
 
-	bool ordemValida = is_ordem_respeitada(ROTA_CLONE);
+	bool ordemValida = is_ordem_respeitada(ROTA_CLONE1);
 	if (!ordemValida) return false;
 
-	bool isPushForwardValido = push_forward(ROTA_CLONE, ponto_swap+1, PF);
+	bool isPushForwardValido = push_forward(ROTA_CLONE1, ponto_swap+1, PF, false);
 	if (isPushForwardValido) return false;
 
-	if(is_rota_valida(ROTA_CLONE)){
-		clone_rota(ROTA_CLONE, rota);
+	if(is_rota_valida(ROTA_CLONE1)){
+		clone_rota(ROTA_CLONE1, rota);
 		return true;
 	}
 	return false;
@@ -603,8 +632,8 @@ bool remove_insert(Rota * rota){
 	Request * carona = ROTA_CLONE1->list[position].r;
 	int offset = desfaz_insercao_carona_rota(ROTA_CLONE1, position);
 	carona->matched = false;
-	push_backward(ROTA_CLONE1, position);
-	push_backward(ROTA_CLONE1, position+offset);//Erro aqui?
+	push_backward(ROTA_CLONE1, position, true);
+	push_backward(ROTA_CLONE1, position+offset, true);//Erro aqui?
 	insere_carona_aleatoria_rota(ROTA_CLONE1);
 	if (is_rota_valida(ROTA_CLONE1)){
 		clone_rota(ROTA_CLONE1, rota);
@@ -614,13 +643,15 @@ bool remove_insert(Rota * rota){
 }
 
 /*Tenta empurar os services uma certa quantidade de tempo
- * retorna true se conseguiu fazer algum push forward*/
-bool push_forward(Rota * rota, int position, double pushf){
-	clone_rota(rota, ROTA_CLONE);
+ * retorna true se conseguiu fazer algum push forward
+ * manter_alteracoes:  Mantem as alterações mesmo se o push forward não for feito
+ * ou a rota for considerada inválida.*/
+bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoes){
+	clone_rota(rota, ROTA_CLONE_PUSH);
 
 	if (position == -1)
-		position = get_random_int(0, ROTA_CLONE->length-1);
-	Service * atual = &ROTA_CLONE->list[position];
+		position = get_random_int(0, ROTA_CLONE_PUSH->length-1);
+	Service * atual = &ROTA_CLONE_PUSH->list[position];
 	double maxPushf = get_latest_time_service(atual) -  atual->service_time;
 
 	if (pushf == -1){
@@ -634,11 +665,11 @@ bool push_forward(Rota * rota, int position, double pushf){
 
 	atual->service_time+= pushf;
 
-	for (int i = position+1; i < ROTA_CLONE->length; i++){
+	for (int i = position+1; i < ROTA_CLONE_PUSH->length; i++){
 		if (pushf == 0)
 			break;
-		atual = &ROTA_CLONE->list[i];
-		Service * ant = &ROTA_CLONE->list[i-1];
+		atual = &ROTA_CLONE_PUSH->list[i];
+		Service * ant = &ROTA_CLONE_PUSH->list[i-1];
 		double bt = get_latest_time_service(atual);
 
 		double waiting_time = atual->service_time - ant->service_time - haversine(ant, atual);
@@ -647,9 +678,9 @@ bool push_forward(Rota * rota, int position, double pushf){
 
 		atual->service_time+= pushf;
 	}
-	bool rotaValida = is_rota_valida(ROTA_CLONE);
-	if (rotaValida){
-		clone_rota(ROTA_CLONE, rota);
+	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
+	if (rotaValida || manter_alteracoes){
+		clone_rota(ROTA_CLONE_PUSH, rota);
 		return true;
 	}
 	return false;
@@ -657,7 +688,7 @@ bool push_forward(Rota * rota, int position, double pushf){
 
 /*Tenta empurar os services uma certa quantidade de tempo
  * Se position = -1, gera aleatoriamente a posição*/
-bool push_backward(Rota * rota, int position){
+bool push_backward(Rota * rota, int position, bool manter_alteracoes){
 	clone_rota(rota, ROTA_CLONE);
 
 	if (position == -1)
@@ -702,8 +733,8 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 			shuffle(mutation_array, operators);
 
 			//Melhora a conversão e o tempo
-			push_backward(rota, -1)
-			||push_forward(rota, -1, -1)
+			push_backward(rota, -1, false)
+			||push_forward(rota, -1, -1, false)
 			||remove_insert(rota)
 			||transfer_rider(rota,ind, g)
 			||swap_rider(rota);

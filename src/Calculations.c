@@ -75,13 +75,15 @@ double time_between_services(Service *a, Service *b){
 }
 
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada
- * request da rota.*/
+ * request da rota.
+ * Os tempos deve estar configurados corretamente nos services*/
 double tempo_gasto_rota(Rota *rota, int i, int j){
 	double accTime =0;
 	for (int k = i; k < j; k++){
 		Service *a = &rota->list[k];
 		Service *b = &rota->list[k+1];
-		accTime += time_between_services(a,b);
+		accTime += b->service_time - a->service_time;
+		//accTime += time_between_services(a,b);
 	}
 	return accTime;
 }
