@@ -142,7 +142,7 @@ bool update_times(Rota *rota, int p){
 		double at = get_earliest_time_service(atual);
 		double bt = get_latest_time_service(atual);
 
-		double tbs = time_between_services(anterior, atual);
+		double tbs = minimal_time_between_services(anterior, atual);
 
 		atual->service_time = anterior->service_time - tbs;
 
@@ -396,7 +396,6 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 		if (!carona->matched){
 			if (try_all_offsets){
 				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
-					//int offset = 1;//TODO, variar o offset
 					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
 					if(inseriu) break;
 				}
@@ -446,6 +445,7 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
 		repair(offspring1, g, true);
 
 		clean_riders_matches(g);
+		shuffle(index_array_riders, g->riders);
 		repair(offspring2, g, true);
 	}
 	else{
@@ -618,6 +618,9 @@ bool remove_insert(Rota * rota){
 		clone_rota(ROTA_CLONE1, rota);
 		return true;
 	}
+	else{
+		carona->matched = true;
+	}
 	return false;
 }
 
@@ -706,18 +709,31 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 		if (accept < mutationProbability){
 			Rota * rota  = &ind->cromossomo[r];
 
-			//int operators = 5;
-			//int mutation_array[operators];
-			//fill_array(mutation_array, operators);
-			//shuffle(mutation_array, operators);
 
-			//Melhora a conversão e o tempo
-			push_backward(rota, -1, false)
-			||push_forward(rota, -1, -1, false)
-			||remove_insert(rota)
-			||transfer_rider(rota,ind, g)
-			||swap_rider(rota);
 
+			int op = rand() % 5;
+			switch(op){
+				case (0):{
+					push_backward(rota, -1, false);
+					break;
+				}
+				case (1):{
+					push_forward(rota, -1, -1, false);
+					break;
+				}
+				case (2):{
+					remove_insert(rota);
+					break;
+				}
+				case (3):{
+					transfer_rider(rota,ind, g);
+					break;
+				}
+				case (4):{
+					swap_rider(rota);
+					break;
+				}
+			}
 		}
 	}
 }

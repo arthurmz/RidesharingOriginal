@@ -10,6 +10,10 @@
 #include <stdlib.h>
 
 
+//True se a <= b, com diferença < epsilon
+bool leq(double a, double b){
+	return ((a <= b) || (a - b) < 0.000001);
+}
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
 inline int get_random_int(int minimum_number, int max_number){
@@ -19,7 +23,7 @@ inline int get_random_int(int minimum_number, int max_number){
 
 /** Recebe uma rota e calcula a distância percorrida pelo motorista */
 double distancia_percorrida(Rota * rota){
-	double accDistance =0;
+	double accDistance = 0;
 	for (int i = 0; i < rota->length -1; i++){
 		Service *a = &rota->list[i];
 		Service *b = &rota->list[i+1];
@@ -31,8 +35,8 @@ double distancia_percorrida(Rota * rota){
 
 /*Distância em km*/
 double haversine_helper(double lat1, double lon1, double lat2, double lon2){
-	double R = 6372.8;
-	double to_rad = 3.1415926536 / 180;
+	const double R = 6372.8;
+	const double to_rad = 3.1415926536 / 180;
 	double dLat = to_rad * (lat2 - lat1);
 	double dLon = to_rad * (lon2 - lon1);
 
@@ -68,9 +72,9 @@ double haversine(Service *a, Service *b){
 }
 
 /*Tempo em minutos*/
-double time_between_services(Service *a, Service *b){
+double minimal_time_between_services(Service *a, Service *b){
 	double distance = haversine(a, b);
-	return distance;//Equivalente ao de baixo
+	return ceil(distance);//Equivalente ao de baixo
 	//return distance / VEHICLE_SPEED * 60;
 }
 
@@ -78,15 +82,15 @@ double time_between_services(Service *a, Service *b){
  * request da rota.
  * Os tempos deve estar configurados corretamente nos services*/
 double tempo_gasto_rota(Rota *rota, int i, int j){
-	double accTime =0;
-	return rota->list[j].service_time - rota->list[i].service_time;
+	//double accTime =0;
+	return ceil(rota->list[j].service_time - rota->list[i].service_time);
 	/*for (int k = i; k < j; k++){
 		Service *a = &rota->list[k];
 		Service *b = &rota->list[k+1];
 		accTime += b->service_time - a->service_time;
 		//accTime += time_between_services(a,b);
 	}*/
-	return accTime;
+	//return accTime;
 }
 
 /**Calcula o service_time mais cedo possível para actual. Baseado
@@ -102,7 +106,7 @@ double calculate_service_time(Service * actual, Service *ant){
 
 	double at = get_earliest_time_service(actual);
 
-	next_time = ant->service_time + st + time_between_services(ant, actual);
+	next_time = ant->service_time + st + minimal_time_between_services(ant, actual);
 	next_time = fmax(next_time, at);
 
 	return next_time;
@@ -129,8 +133,8 @@ bool is_dentro_janela_tempo(Rota * rota){
 			Service *destiny = &rota->list[j];
 			if(destiny->is_source || source->r != destiny->r) continue;
 
-			if ( ! ((source->r->pickup_earliest_time <= source->service_time && source->service_time <= source->r->pickup_latest_time)
-				&& (destiny->r->delivery_earliest_time <= destiny->service_time && destiny->service_time <= destiny->r->delivery_latest_time)))
+			if ( ! ((leq(source->r->pickup_earliest_time, source->service_time) && leq(source->service_time, source->r->pickup_latest_time))
+				&& (leq(destiny->r->delivery_earliest_time, destiny->service_time) && leq(destiny->service_time, destiny->r->delivery_latest_time))))
 				return false;
 		}
 	}
@@ -164,16 +168,16 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 	Service * destiny = &rota->list[rota->length-1];
 	double MTD = AD + BD * haversine(source, destiny);//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
-	return accDistance <= MTD;
+	return leq(accDistance, MTD);
 }
 
 /*Verifica se o tempo do request partindo do índice I e chegando no índice J é respeitado*/
 bool is_tempo_respeitado(Rota *rota, int i, int j){
 	Service * source = &rota->list[i];
 	Service * destiny = &rota->list[j];
-	double MTT = AT + BT * time_between_services(source, destiny);
+	double MTT = AT + BT * minimal_time_between_services(source, destiny);
 	double accTime = tempo_gasto_rota(rota, i, j);
-	return accTime <= MTT;
+	return leq(accTime, MTT);
 }
 
 /*Verifica se os tempos de todos os requests nessa rota estão sendo respeitados*/
@@ -247,3 +251,9 @@ bool is_rota_valida(Rota *rota){
 		return false;
 	return true;
 }
+
+
+
+
+
+
