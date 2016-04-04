@@ -50,7 +50,7 @@ Individuo * generate_random_individuo(Graph *g, bool insereCaronasAleatorias){
 		rota->length = 2;
 
 		if (insereCaronasAleatorias)
-			insere_carona_aleatoria_rota(rota);
+			insere_carona_aleatoria_rota(rota, true);
 	}
 	//Depois de inserir todas as rotas, limpa a lista de matches
 	//Para que o próximo indivíduo possa usa-las

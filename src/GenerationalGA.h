@@ -102,7 +102,7 @@ void malloc_rota_clone();
 bool update_times(Rota *rota, int p);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
-void insere_carona_aleatoria_rota(Rota* rota);
+void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets);
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
 double evaluate_objective_functions(Individuo *idv, Graph *g);
