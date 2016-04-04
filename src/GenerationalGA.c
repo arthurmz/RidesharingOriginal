@@ -228,17 +228,9 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	if (PF > 0) {
 		next->service_time+= PF;
 		if (posicao_insercao+2 < ROTA_CLONE->length)
-			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+2, PF, true);// O next não tá sendo atualizado, verificar.
-		else
-			isRotaValida = true;
-	}
-	else{
-		isRotaValida = true;
+			push_forward(ROTA_CLONE, posicao_insercao+2, PF, true);
 	}
 	ROTA_CLONE->length++;
-	//if (!isRotaValida) Só verifica a validade na segunda inserção
-		//return false;
-
 
 	//Empurra todo mundo depois da posição do offset
 	for (int i = ultimaPos+1; i >= posicao_insercao + offset; i--){
@@ -258,20 +250,10 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	if (PF > 0) {
 		next->service_time+= PF;
 		if (posicao_insercao+offset+2 < ROTA_CLONE->length){
-			isRotaValida = push_forward(ROTA_CLONE, posicao_insercao+offset+2, PF, true);
+			push_forward(ROTA_CLONE, posicao_insercao+offset+2, PF, true);
 		}
-		else{
-			isRotaValida = true;
-		}
-	}
-	else{
-		isRotaValida = true;
 	}
 	ROTA_CLONE->length++;
-	if (!isRotaValida){
-		return false;
-	}
-
 
 	//Aumentar a capacidade se tiver chegando no limite
 	if (ROTA_CLONE->length == ROTA_CLONE->capacity - 4){
@@ -459,22 +441,12 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
 		copy_rota(parent1, offspring2, 0, crossoverPoint);
 		copy_rota(parent2, offspring2, crossoverPoint, rotaSize);
 
-		int index_array[g->riders];
-		for (int l = 0; l < g->riders; l++){
-			index_array[l] = l;
-		}
-
 		clean_riders_matches(g);
-		shuffle(index_array, g->riders);
+		shuffle(index_array_riders, g->riders);
 		repair(offspring1, g, true);
-		//if (find_bug_idv(offspring1))
-			//printf("bug real\n");
 
 		clean_riders_matches(g);
-		shuffle(index_array, g->riders);
 		repair(offspring2, g, true);
-		//if (find_bug_idv(offspring2))
-			//printf("bug real 2\n");
 	}
 	else{
 		copy_rota(parent1, offspring1, 0, rotaSize);
@@ -497,7 +469,7 @@ void evaluate_riders_matches(Individuo *ind, Graph * g){
 
 /*Remove todas as caronas que quebram a validação
  * Tenta inserir novas
- * Utiliza graph pra saber quem já fez match.
+ * Utiliza graph pra saber quem já fez match (Ao mesmo tempo em que atualiza o graph)
  * No final da execução os matches essão determinados.
  * insereCaronaAleatoria: Se falso então não adiciona novos caronas
  * */
@@ -545,8 +517,7 @@ bool swap_rider(Rota * rota){
 	bool ordemValida = is_ordem_respeitada(ROTA_CLONE1);
 	if (!ordemValida) return false;
 
-	bool isPushForwardValido = push_forward(ROTA_CLONE1, ponto_swap+1, PF, false);
-	if (isPushForwardValido) return false;
+	push_forward(ROTA_CLONE1, ponto_swap+1, PF, true);
 
 	if(is_rota_valida(ROTA_CLONE1)){
 		clone_rota(ROTA_CLONE1, rota);
@@ -641,7 +612,7 @@ bool remove_insert(Rota * rota){
 	int offset = desfaz_insercao_carona_rota(ROTA_CLONE1, position);
 	carona->matched = false;
 	push_backward(ROTA_CLONE1, position, true);
-	push_backward(ROTA_CLONE1, position+offset, true);//Erro aqui?
+	push_backward(ROTA_CLONE1, position+offset, true);
 	insere_carona_aleatoria_rota(ROTA_CLONE1, true);
 	if (is_rota_valida(ROTA_CLONE1)){
 		clone_rota(ROTA_CLONE1, rota);
@@ -697,30 +668,30 @@ bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoe
 /*Tenta empurar os services uma certa quantidade de tempo
  * Se position = -1, gera aleatoriamente a posição*/
 bool push_backward(Rota * rota, int position, bool manter_alteracoes){
-	clone_rota(rota, ROTA_CLONE);
+	clone_rota(rota, ROTA_CLONE_PUSH);
 
 	if (position == -1)
-		position = get_random_int(0, ROTA_CLONE->length-1);
-	Service * atual = &ROTA_CLONE->list[position];
+		position = get_random_int(0, ROTA_CLONE_PUSH->length-1);
+	Service * atual = &ROTA_CLONE_PUSH->list[position];
 	double pushb = atual->service_time - get_earliest_time_service(atual);
 	pushb = pushb * ((double)rand() / RAND_MAX);
 	if (pushb <= 0) return false;
 
 	atual->service_time-= pushb;
 
-	for (int i = position+1; i < ROTA_CLONE->length; i++){
+	for (int i = position+1; i < ROTA_CLONE_PUSH->length; i++){
 		if (pushb == 0)
 			break;
-		atual = &ROTA_CLONE->list[i];
+		atual = &ROTA_CLONE_PUSH->list[i];
 		double at = get_earliest_time_service(atual);
 
 		pushb = fmin(pushb, atual->service_time - at);
 
 		atual->service_time-= pushb;
 	}
-	bool rotaValida = is_rota_valida(ROTA_CLONE);
-	if (rotaValida){
-		clone_rota(ROTA_CLONE, rota);
+	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
+	if (rotaValida || manter_alteracoes){
+		clone_rota(ROTA_CLONE_PUSH, rota);
 		return true;
 	}
 	return false;
@@ -728,17 +699,17 @@ bool push_backward(Rota * rota, int position, bool manter_alteracoes){
 
 void mutation(Individuo *ind, Graph *g, double mutationProbability){
 
+	evaluate_riders_matches(ind, g);//Porque aqui dentro melhora??
+
 	for (int r = 0; r < ind->size; r++){
 		double accept = (double)rand() / RAND_MAX;
-
 		if (accept < mutationProbability){
-			evaluate_riders_matches(ind, g);//Porque aqui dentro melhora??
 			Rota * rota  = &ind->cromossomo[r];
 
-			int operators = 5;
-			int mutation_array[operators];
-			fill_array(mutation_array, operators);
-			shuffle(mutation_array, operators);
+			//int operators = 5;
+			//int mutation_array[operators];
+			//fill_array(mutation_array, operators);
+			//shuffle(mutation_array, operators);
 
 			//Melhora a conversão e o tempo
 			push_backward(rota, -1, false)
