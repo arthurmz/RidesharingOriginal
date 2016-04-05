@@ -34,7 +34,7 @@ double distancia_percorrida(Rota * rota){
 }
 
 /*Distância em km*/
-double haversine_helper(double lat1, double lon1, double lat2, double lon2){
+double haversine_helper_original(double lat1, double lon1, double lat2, double lon2){
 	const double R = 6372.8;
 	const double to_rad = 3.1415926536 / 180;
 	double dLat = to_rad * (lat2 - lat1);
@@ -46,6 +46,21 @@ double haversine_helper(double lat1, double lon1, double lat2, double lon2){
 	double a = pow (sin(dLat/2),2) + pow(sin(dLon/2),2) * cos(lat1) * cos(lat2);
 	double c = 2 * asin(sqrt(a));
 	return R * c;
+}
+
+//Versão aproximada e mais rápida
+double haversine_helper(double lat1, double lon1, double lat2, double lon2){
+	const double R = 6372.8;
+	const double to_rad = 3.1415926536 / 180;
+
+	lat1 = lat1 * to_rad;
+	lon1 = lon1 * to_rad;
+	lat2 = lat2 * to_rad;
+	lon2 = lon2 * to_rad;
+
+	double x = (lon2 - lon1) * cos((lat1 + lat2) / 2);
+	double y = (lat2 - lat1);
+	return sqrt(x * x + y * y) * R;
 }
 
 /** Distância entre os services */
