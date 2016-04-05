@@ -612,7 +612,8 @@ bool remove_insert(Rota * rota){
 	int offset = desfaz_insercao_carona_rota(ROTA_CLONE1, position);
 	carona->matched = false;
 	push_backward(ROTA_CLONE1, position, true);
-	push_backward(ROTA_CLONE1, position+offset, true);
+	if (position+offset < ROTA_CLONE1->length)
+		push_backward(ROTA_CLONE1, position+offset, true);
 	insere_carona_aleatoria_rota(ROTA_CLONE1, true);
 	if (is_rota_valida(ROTA_CLONE1)){
 		clone_rota(ROTA_CLONE1, rota);
@@ -663,9 +664,8 @@ bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoe
 	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
 	if (rotaValida || manter_alteracoes){
 		clone_rota(ROTA_CLONE_PUSH, rota);
-		return true;
 	}
-	return false;
+	return rotaValida;
 }
 
 /*Tenta empurar os services uma certa quantidade de tempo
@@ -695,9 +695,8 @@ bool push_backward(Rota * rota, int position, bool manter_alteracoes){
 	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
 	if (rotaValida || manter_alteracoes){
 		clone_rota(ROTA_CLONE_PUSH, rota);
-		return true;
 	}
-	return false;
+	return rotaValida;
 }
 
 void mutation(Individuo *ind, Graph *g, double mutationProbability){
