@@ -373,7 +373,9 @@ double evaluate_objective_functions(Individuo *idv, Graph *g){
 
 /*Insere uma quantidade variável de caronas na rota informada
  * Utilizado na geração da população inicial, e na reparação dos indivíduos quebrados
- * try_all_offsets: se true então tenta inserir o destino em cada um dos pontos subsequentes à p na rota*/
+ * try_all_offsets: se true então tenta inserir o destino em cada um dos pontos subsequentes à p na rota
+ *
+ * IMPORTANTE: Antes de chamar, os caronas devem estar determinados.*/
 void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 	Request * request = &g->request_list[rota->id];
 
@@ -409,6 +411,16 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 	}
 }
 
+/**
+ * Insere caronas aleatórias para todas as caronas da rota
+ * IMPORTANTE: Antes de chamar, todos os caronas já feito match devem estar no grafo
+ */
+void insere_carona_aleatoria_individuo(Individuo * ind){
+	for (int i = 0; i < ind->size; i++){
+		insere_carona_aleatoria_rota(&ind->cromossomo[i], true);
+	}
+}
+
 
 /*seleção por torneio, k = 2*/
 Individuo * tournamentSelection(Population * parents, Graph * g){
@@ -440,13 +452,16 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
 		copy_rota(parent1, offspring2, 0, crossoverPoint);
 		copy_rota(parent2, offspring2, crossoverPoint, rotaSize);
 
-		clean_riders_matches(g);
 		shuffle(index_array_riders, g->riders);
-		repair(offspring1, g, true);
+		repair(offspring1, g);
+		evaluate_riders_matches(offspring1, g);
 
-		clean_riders_matches(g);
+		insere_carona_aleatoria_individuo(offspring1);
+
 		shuffle(index_array_riders, g->riders);
-		repair(offspring2, g, true);
+		repair(offspring2, g);
+
+		insere_carona_aleatoria_individuo(offspring2);
 	}
 	else{
 		copy_rota(parent1, offspring1, 0, rotaSize);
@@ -461,19 +476,40 @@ void evaluate_riders_matches(Individuo *ind, Graph * g){
 	for (int i = 0; i < ind->size; i++){//Pra cada rota do idv
 		Rota *rota = &ind->cromossomo[i];
 		for (int j = 1; j < rota->length-1; j++){
-			rota->list[j].r->matched = true;
+			if (rota->list[j].is_source && rota->list[j].r->matched){
+				int rotaPositionBug = -12;
+				bool achou = false;
+				Rota * rotaBug;
+				for (int g = 0; g < i; g++){
+					rotaBug = &ind->cromossomo[g];
+					for (int p = 1; p < rota->length -1; p++){
+						if (rotaBug->list[p].r == rota->list[j].r){
+							printf("local = %d, %d", g, p);
+							rotaPositionBug = g;
+							achou = true;
+							break;
+						}
+					}
+					if (achou)
+						break;
+				}
+				if (achou)
+					printf("bug e achou\n");
+				else
+					printf("bug e não achou\n");
+			}
+			if (rota->list[j].is_source)
+				rota->list[j].r->matched = true;
 		}
 	}
-	//repair(ind, g, false);
 }
 
-/*Remove todas as caronas que quebram a validação
- * Tenta inserir novas
- * Utiliza graph pra saber quem já fez match (Ao mesmo tempo em que atualiza o graph)
- * No final da execução os matches essão determinados.
- * insereCaronaAleatoria: Se falso então não adiciona novos caronas
- * */
-void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
+/**
+ * Repara o indivíduo, retirando todas as caronas repetidas.
+ * No fim, as caronas com match são registradas no grafo
+ */
+void repair(Individuo *offspring, Graph *g){
+	clean_riders_matches(g);
 	//find_bug_cromossomo(offspring, g, 20);
 	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
 		Rota *rota = &offspring->cromossomo[i];
@@ -483,7 +519,7 @@ void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 		while (j < (rota->length -1) ) {
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
-			if ((rota->list[j].is_source && rota->list[j].r->matched && !rota->list[j].r->driver)){//nunca será driver
+			if ((rota->list[j].is_source && rota->list[j].r->matched)){
 				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
 			}
 			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
@@ -491,8 +527,6 @@ void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria){
 			}
 			j++;
 		}
-		if (insereCaronaAleatoria)
-			insere_carona_aleatoria_rota(rota, true);
 	}
 }
 
@@ -701,7 +735,7 @@ bool push_backward(Rota * rota, int position, bool manter_alteracoes){
 
 void mutation(Individuo *ind, Graph *g, double mutationProbability){
 
-	evaluate_riders_matches(ind, g);//Porque aqui dentro melhora??
+	evaluate_riders_matches(ind, g);
 
 	for (int r = 0; r < ind->size; r++){
 		double accept = (double)rand() / RAND_MAX;
@@ -713,23 +747,23 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 			int op = rand() % 5;
 			switch(op){
 				case (0):{
-					push_backward(rota, -1, false);
+					//push_backward(rota, -1, false);
 					break;
 				}
 				case (1):{
-					push_forward(rota, -1, -1, false);
+					//push_forward(rota, -1, -1, false);
 					break;
 				}
 				case (2):{
-					remove_insert(rota);
+					//remove_insert(rota);
 					break;
 				}
 				case (3):{
-					transfer_rider(rota,ind, g);
+					//transfer_rider(rota,ind, g);
 					break;
 				}
 				case (4):{
-					swap_rider(rota);
+					//swap_rider(rota);
 					break;
 				}
 			}
@@ -751,6 +785,9 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 		Individuo *offspring2 = offspring->list[i];
 
 		crossover(parent1, parent2, offspring1, offspring2, g, crossoverProbability);
+
+		evaluate_riders_matches(offspring1, g);
+		//evaluate_riders_matches(offspring2, g);
 
 		mutation(offspring1, g, mutationProbability);
 		mutation(offspring2, g, mutationProbability);

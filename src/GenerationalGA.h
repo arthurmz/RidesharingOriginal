@@ -103,6 +103,7 @@ bool update_times(Rota *rota, int p);
 bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets);
+void insere_carona_aleatoria_individuo(Individuo * ind);
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
 double evaluate_objective_functions(Individuo *idv, Graph *g);
@@ -112,7 +113,7 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 void empty_front_list(Fronts * f);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
-void repair(Individuo *offspring, Graph *g, bool insereCaronaAleatoria);
+void repair(Individuo *offspring, Graph *g);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
 bool push_backward(Rota * rota, int position, bool manter_alteracoes);
 bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoes);
