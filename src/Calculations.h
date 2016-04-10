@@ -14,6 +14,7 @@ double distancia_percorrida(Rota * rota);
 double haversine(Service *a, Service *b);
 double haversine_helper(double lat1, double lon1, double lat2, double lon2);
 double minimal_time_between_services(Service *a, Service *b);
+double minimal_time_request(Request *rq);
 double tempo_gasto_rota(Rota *rota, int i, int j);
 double calculate_service_time(Service * actual, Service *ant);
 bool is_dentro_janela_tempo(Rota * rota);
@@ -26,5 +27,6 @@ bool is_rota_valida(Rota *rota);
 double get_earliest_time_service(Service * atual);
 double get_latest_time_service(Service * atual);
 int get_random_int(int minimum_number, int max_number);
+double round_1_decimal(double n);
 
 #endif /* CALCULATIONS_H_ */

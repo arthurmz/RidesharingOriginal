@@ -36,10 +36,8 @@ Individuo * generate_random_individuo(Graph *g, bool insereCaronasAleatorias){
 	clean_riders_matches(g);
 
 	for (int x = 0; x < g->drivers ; x++){//pra cada uma das rotas
-		int j = index_array_drivers[x];
-		Rota * rota = &idv->cromossomo[j];
-		Request * driver = &g->request_list[j];
-
+		Rota * rota = &idv->cromossomo[x];
+		Request * driver = &g->request_list[x];
 		//Insere o motorista na rota
 		rota->list[0].r = driver;
 		rota->list[0].is_source = true;
@@ -49,7 +47,6 @@ Individuo * generate_random_individuo(Graph *g, bool insereCaronasAleatorias){
 		rota->list[1].is_source = false;
 		rota->list[1].service_time = rota->list[0].r->delivery_earliest_time;//Chega na hora mais cedo
 		rota->length = 2;
-
 	}
 
 	if (insereCaronasAleatorias)
@@ -64,9 +61,7 @@ Individuo * generate_random_individuo(Graph *g, bool insereCaronasAleatorias){
  * até conseguir fazer match de N caronas. Se até o fim não conseguiu, aleatoriza e segue pro próximo rider*/
 Population *generate_random_population(int size, Graph *g, bool insereCaronasAleatorias){
 	Population *p = (Population*) new_empty_population(size);
-
 	for (int i = 0; i < size; i++){//Pra cada um dos indivíduos idv
-		shuffle(index_array_drivers,g->drivers);
 		Individuo *idv = generate_random_individuo(g, insereCaronasAleatorias);
 		idv->id = p->size;
 		p->list[p->size++] = idv;
@@ -105,7 +100,7 @@ void clone_rota(Rota * rota, Rota *cloneRota){
 	}
 }
 
-/** Verifica se o carona informado existe na lista de caronas informados */
+/** Verifica se o carona informado existe na lista de caronas matchables */
 bool contains(Request * motorista, Request *rider){
 	for (int i = 0; i < motorista->matchable_riders; i ++){
 		if (motorista->matchable_riders_list[i] == rider)
@@ -155,10 +150,17 @@ Graph *new_graph(int drivers, int riders, int total_requests){
 		g->request_list[i].matchable_riders = 0;
 		if (i < drivers)
 			g->request_list[i].matchable_riders_list = calloc(riders, sizeof(Request*));
+		else
+			g->request_list[i].matchable_riders_list = NULL;
 	}
 	return g;
 }
 
+/** Obtem a instância do problema do arquivo e preenche no "Grafo" em memória
+ * Observar que os tempos de delivery no txt não estão corretos,
+ * já que o tempo computado originalmente no artigo é sempre o ceil do tempo real
+ * (que por sua vez é determinado pela distância de haversine).
+ */
 Graph * parse_file(char *filename){
 	FILE *fp=fopen(filename, "r");
 
@@ -204,6 +206,10 @@ Graph * parse_file(char *filename){
 				&rq->delivery_location_latitude,
 				&rq->delivery_earliest_time,
 				&rq->delivery_latest_time);
+
+		double minimal_time = minimal_time_request(rq);
+		rq->delivery_earliest_time = rq->pickup_earliest_time + minimal_time;
+		rq->delivery_latest_time = rq->pickup_latest_time + minimal_time;
 		if(rq->id < drivers)
 			rq->driver = true;
 		else

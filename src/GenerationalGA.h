@@ -119,8 +119,9 @@ bool push_backward(Rota * rota, int position, bool manter_alteracoes);
 bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoes);
 
 
-int * index_array_riders;
 int * index_array_drivers;
+int * index_array_drivers_transfer_rider;
+int * index_array_drivers_mutation;
 int * index_array_caronas_inserir;
 
 

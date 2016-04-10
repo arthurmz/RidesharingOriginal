@@ -9,10 +9,14 @@
 #include <math.h>
 #include <stdlib.h>
 
+/** Arredonda o número para 1 casa decimal */
+inline double round_1_decimal(double n){
+	return round(n * 10.0) / 10.0;
+}
 
 //True se a <= b, com diferença < epsilon
 bool leq(double a, double b){
-	return ((a <= b) || (a - b) < 0.000001);
+	return ((a <= b) || (a - b) < 0.001);
 }
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
@@ -33,9 +37,9 @@ double distancia_percorrida(Rota * rota){
 	return accDistance;
 }
 
-/*Distância em km*/
-double haversine_helper_original(double lat1, double lon1, double lat2, double lon2){
-	const double R = 6372.8;
+/*Distância em km ORIGINAL*/
+double haversine_helper_or(double lat1, double lon1, double lat2, double lon2){
+	const double R = 6371;//Recomendado. não mudar
 	const double to_rad = 3.1415926536 / 180;
 	double dLat = to_rad * (lat2 - lat1);
 	double dLon = to_rad * (lon2 - lon1);
@@ -45,12 +49,29 @@ double haversine_helper_original(double lat1, double lon1, double lat2, double l
 
 	double a = pow (sin(dLat/2),2) + pow(sin(dLon/2),2) * cos(lat1) * cos(lat2);
 	double c = 2 * asin(sqrt(a));
-	return R * c;
+	//return R * c;
+	return round_1_decimal(R * c);
+	//return round((R * c) * 10.0)/10.0;
+}
+
+/** rosetacode */
+double haversine_helper_ros(double th1, double ph1, double th2, double ph2){
+	double TO_RAD = 3.1415926536 / 180;
+	double R = 6371;//Valor que chega mais perto do artigo
+	double dx, dy, dz;
+	ph1 -= ph2;
+	ph1 *= TO_RAD, th1 *= TO_RAD, th2 *= TO_RAD;
+
+	dz = sin(th1) - sin(th2);
+	dx = cos(ph1) * cos(th1) - cos(th2);
+	dy = sin(ph1) * cos(th1);
+	double result = asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * R;
+	return round(result * 10.0)/10.0;
 }
 
 //Versão aproximada e mais rápida
 double haversine_helper(double lat1, double lon1, double lat2, double lon2){
-	const double R = 6372.8;
+	const double R = 6371;//Recomendado. não mudar
 	const double to_rad = 3.1415926536 / 180;
 
 	lat1 = lat1 * to_rad;
@@ -60,7 +81,8 @@ double haversine_helper(double lat1, double lon1, double lat2, double lon2){
 
 	double x = (lon2 - lon1) * cos((lat1 + lat2) / 2);
 	double y = (lat2 - lat1);
-	return sqrt(x * x + y * y) * R;
+	double result = sqrt(x * x + y * y) * R;
+	return round_1_decimal(result);
 }
 
 /** Distância entre os services */
@@ -86,11 +108,21 @@ double haversine(Service *a, Service *b){
 	return haversine_helper(lat1, long1, lat2, long2);
 }
 
-/*Tempo em minutos*/
+/** Retorna o tempo necessário para ir do ponto
+ * de pickup ao ponto de delivery de um mesmo request
+ * Usado para determinar a janela de tempo corretamente.
+ */
+double minimal_time_request(Request *rq){
+	double distance = haversine_helper(rq->pickup_location_latitude, rq->pickup_location_longitude,
+			rq->delivery_location_latitude, rq->delivery_location_longitude);
+	double result = ceil(distance / VEHICLE_SPEED * 60.0);
+	return result;
+}
+
+/*Tempo de viagem em minutos entre o ponto A e o ponto B*/
 double minimal_time_between_services(Service *a, Service *b){
 	double distance = haversine(a, b);
-	return ceil(distance);//Equivalente ao de baixo
-	//return distance / VEHICLE_SPEED * 60;
+	return ceil(distance / VEHICLE_SPEED * 60);
 }
 
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada
@@ -98,7 +130,7 @@ double minimal_time_between_services(Service *a, Service *b){
  * Os tempos deve estar configurados corretamente nos services*/
 double tempo_gasto_rota(Rota *rota, int i, int j){
 	//double accTime =0;
-	return ceil(rota->list[j].service_time - rota->list[i].service_time);
+	return rota->list[j].service_time - rota->list[i].service_time;
 	/*for (int k = i; k < j; k++){
 		Service *a = &rota->list[k];
 		Service *b = &rota->list[k+1];

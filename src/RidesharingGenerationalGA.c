@@ -16,69 +16,10 @@
 #include "GenerationalGA.h"
 #include "Calculations.h"
 
+void initialize_mem(Graph * g);
+void setup_matchable_riders(Graph * g);
+void print_qtd_matches_minima(Graph * g);
 
-//Inicializa vetores globais úteis
-void initialize_mem(Graph * g){
-	malloc_rota_clone();
-	index_array_rotas = malloc(g->drivers * sizeof(Request*));
-	index_array_riders = malloc(g->riders * sizeof(int));
-	index_array_drivers = malloc(g->drivers * sizeof(int));
-	index_array_caronas_inserir = malloc(MAX_SERVICES_MALLOC_ROUTE * 10 * sizeof(int));
-	fill_array(index_array_riders, g->riders);
-	fill_array(index_array_drivers, g->drivers);
-	fill_array(index_array_caronas_inserir, MAX_SERVICES_MALLOC_ROUTE * 10);
-}
-
-void setup_matchable_riders(Graph * g){
-	Individuo * individuoTeste = generate_random_individuo(g, false);
-	for (int i = 0; i < individuoTeste->size; i++){
-		index_array_rotas[i] = individuoTeste->cromossomo[i].list[0].r;
-	}
-
-	for (int i = 0; i < g->drivers; i++){
-		Request * motoristaGrafo = &g->request_list[i];
-		Rota * rota = &individuoTeste->cromossomo[i];
-		for (int j = g->drivers; j < g->total_requests; j++){
-			Request * carona = &g->request_list[j];
-			if (insere_carona_rota(rota, carona, 1, 1, false) ){
-				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
-			}
-		}
-	}
-	//Ordenando o array de indices das rotas (por matchable_riders)
-	qsort(index_array_rotas, g->drivers, sizeof(Request*), compare_rotas );
-}
-
-
-void print_qtd_matches_minima(Graph * g){
-	FILE *fp=fopen("qtd_matches_minima.txt", "w");
-	/*Imprimindo quantos caronas cada motorista consegue fazer match*/
-	int qtd = 0;
-	int motor_array[g->drivers];
-	int qtd_array[g->total_requests];
-	for (int i = 0; i < g->drivers; i++){
-		motor_array[i] = 0;
-	}
-	for (int i = 0; i < g->total_requests; i++){
-		qtd_array[i] = 0;
-	}
-	fprintf(fp,"quantos matches cada motorista consegue\n");
-	for (int i = 0; i < g->drivers; i++){
-		fprintf(fp,"%d: ",g->request_list[i].matchable_riders);
-		for (int j = 0; j < g->request_list[i].matchable_riders; j++){
-			if (!qtd_array[g->request_list[i].matchable_riders_list[j]->id] && !motor_array[i]){
-				qtd_array[g->request_list[i].matchable_riders_list[j]->id] = 1;
-				motor_array[i] = 1;
-				qtd++;
-			}
-			fprintf(fp,"%d ", g->request_list[i].matchable_riders_list[j]->id);
-		}
-		fprintf(fp,"\n");
-	}
-
-	fprintf(fp,"qtd mínima que deveria conseguir: %d\n", qtd);
-	fclose(fp);
-}
 
 /*Parametros: nome do arquivo
  *
@@ -127,9 +68,38 @@ int main(int argc,  char** argv){
 	
 	Population * parents = generate_random_population(POPULATION_SIZE, g, true);
 	Population * children = generate_random_population(POPULATION_SIZE, g, false);
-	evaluate_objective_functions_pop(parents, g);
+	//evaluate_objective_functions_pop(parents, g);
 
-	clean_riders_matches(g);
+	//calculando o tempo mínimo de viagem dos motoristas
+	double drivers_total_time = 0;
+	double drivers_total_distance = 0;
+	double tempo_total_que_deve_dar_igual_ao_artigo = 0;
+	Individuo * idv = children->list[0];
+	for (int i = 0; i < idv->size; i++){
+		 Service *origem = &idv->cromossomo[i].list[0];
+		 Service *destino = &idv->cromossomo[i].list[1];
+		 double min_time = minimal_time_between_services(origem, destino);
+		 drivers_total_time += min_time;
+		 double hav_temp = haversine(origem, destino);
+		 //hav_temp = round(hav_temp * 10.0)/10.0;
+		 drivers_total_distance += hav_temp;
+		 double diff_tempo = destino->r->delivery_earliest_time - origem->r->pickup_earliest_time;
+		 double round_diff_tempo = round(diff_tempo * 10.0)/10.0;
+		 tempo_total_que_deve_dar_igual_ao_artigo += ceil(diff_tempo);
+		 char roundd = '+';
+		 if (diff_tempo - hav_temp < 0.001)
+			 roundd = ' ';
+		 else
+			 roundd = '+';
+		 printf("diff: %f rounddiff: %f hav_temp: %f %c\n",diff_tempo, round_diff_tempo, hav_temp, roundd);
+	}
+	printf("tempo total dos motoristas: %f\n", drivers_total_time);
+	printf("distância total dos motoristas: %f\n", drivers_total_distance);
+	printf("TEMPO Total que deve dar igual ao artigo %f\n", tempo_total_que_deve_dar_igual_ao_artigo);
+	return 0;
+
+
+	//clean_riders_matches(g);
 
 	int i = 0;
 	while(i < ITERATIONS){
@@ -160,5 +130,72 @@ int main(int argc,  char** argv){
 	//dealoc_fronts(frontsList); :(
 	//dealoc_graph(g);
 	return EXIT_SUCCESS;
+}
+
+
+//Inicializa vetores globais úteis
+void initialize_mem(Graph * g){
+	malloc_rota_clone();
+	index_array_rotas = malloc(g->drivers * sizeof(Request*));
+	index_array_drivers = malloc(g->drivers * sizeof(int));
+	index_array_drivers_transfer_rider = malloc(g->drivers * sizeof(int));
+	index_array_drivers_mutation = malloc(g->drivers * sizeof(int));
+	index_array_caronas_inserir = malloc(MAX_SERVICES_MALLOC_ROUTE * 100 * sizeof(int));
+	fill_array(index_array_drivers, g->drivers);
+	fill_array(index_array_drivers_transfer_rider, g->drivers);
+	fill_array(index_array_drivers_mutation, g->drivers);
+	fill_array(index_array_caronas_inserir, MAX_SERVICES_MALLOC_ROUTE * 100);
+}
+
+void setup_matchable_riders(Graph * g){
+	Individuo * individuoTeste = generate_random_individuo(g, false);
+	for (int i = 0; i < g->drivers; i++){
+		index_array_rotas[i] = &g->request_list[i];
+	}
+
+	for (int i = 0; i < g->drivers; i++){
+		Request * motoristaGrafo = individuoTeste->cromossomo[i].list[0].r;
+		Rota * rota = &individuoTeste->cromossomo[i];
+
+		for (int j = g->drivers; j < g->total_requests; j++){
+			Request * carona = &g->request_list[j];
+			if (insere_carona_rota(rota, carona, 1, 1, false) ){
+				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
+			}
+		}
+	}
+	//Ordenando o array de indices das rotas (por matchable_riders)
+	qsort(index_array_rotas, g->drivers, sizeof(Request*), compare_rotas );
+}
+
+
+void print_qtd_matches_minima(Graph * g){
+	FILE *fp=fopen("qtd_matches_minima.txt", "w");
+	/*Imprimindo quantos caronas cada motorista consegue fazer match*/
+	int qtd = 0;
+	int motor_array[g->drivers];
+	int qtd_array[g->total_requests];
+	for (int i = 0; i < g->drivers; i++){
+		motor_array[i] = 0;
+	}
+	for (int i = 0; i < g->total_requests; i++){
+		qtd_array[i] = 0;
+	}
+	fprintf(fp,"quantos matches cada motorista consegue\n");
+	for (int i = 0; i < g->drivers; i++){
+		fprintf(fp,"%d: ",g->request_list[i].matchable_riders);
+		for (int j = 0; j < g->request_list[i].matchable_riders; j++){
+			if (!qtd_array[g->request_list[i].matchable_riders_list[j]->id] && !motor_array[i]){
+				qtd_array[g->request_list[i].matchable_riders_list[j]->id] = 1;
+				motor_array[i] = 1;
+				qtd++;
+			}
+			fprintf(fp,"%d ", g->request_list[i].matchable_riders_list[j]->id);
+		}
+		fprintf(fp,"\n");
+	}
+
+	fprintf(fp,"qtd mínima que deveria conseguir: %d\n", qtd);
+	fclose(fp);
 }
 
