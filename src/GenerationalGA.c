@@ -200,6 +200,9 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		return false;
 	}
 
+	if (rota->id == 67 && rota->length == 6 && carona->id == 666)
+		printf("achei meu caso particular\n");
+
 	clone_rota(rota, ROTA_CLONE);
 	bool isRotaValida = false;
 	Service * ant = NULL;

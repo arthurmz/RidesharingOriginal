@@ -6,6 +6,7 @@
  */
 
 #include "Helper.h"
+#include "Calculations.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

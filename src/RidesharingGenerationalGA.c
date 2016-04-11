@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <float.h>
+#include <math.h>
 #include "Helper.h"
 #include "GenerationalGA.h"
 #include "Calculations.h"
@@ -96,7 +98,7 @@ int main(int argc,  char** argv){
 	printf("tempo total dos motoristas: %f\n", drivers_total_time);
 	printf("distância total dos motoristas: %f\n", drivers_total_distance);
 	printf("TEMPO Total que deve dar igual ao artigo %f\n", tempo_total_que_deve_dar_igual_ao_artigo);
-	return 0;
+	//return 0;
 
 
 	//clean_riders_matches(g);

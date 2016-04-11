@@ -16,7 +16,9 @@ inline double round_1_decimal(double n){
 
 //True se a <= b, com diferença < epsilon
 bool leq(double a, double b){
-	return ((a <= b) || (a - b) < 0.001);
+	if ((a > b) && a - b < 0.2 && a - b >= 0.1)
+		printf("quase dava certo");
+	return ((a <= b) || (a - b) < 0.1);
 }
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
@@ -222,7 +224,7 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 bool is_tempo_respeitado(Rota *rota, int i, int j){
 	Service * source = &rota->list[i];
 	Service * destiny = &rota->list[j];
-	double MTT = AT + BT * minimal_time_between_services(source, destiny);
+	double MTT = ceil(AT + BT * minimal_time_between_services(source, destiny));
 	double accTime = tempo_gasto_rota(rota, i, j);
 	return leq(accTime, MTT);
 }
@@ -236,7 +238,10 @@ bool is_tempos_respeitados(Rota *rota){
 			Service *destiny = &rota->list[j];
 			if(destiny->is_source || source->r != destiny->r) continue;
 
-			if (!is_tempo_respeitado(rota, i, j)) return false;
+			if (!is_tempo_respeitado(rota, i, j)){
+				return false;
+			}
+			break;
 		}
 	}
 	return true;
