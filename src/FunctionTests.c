@@ -73,7 +73,7 @@ int main_haversine(){
 	double longitude_b = -87.98536;
 	double latitude_b = 41.708320000000001;
 
-	double result = haversine_helper(latitude_a, longitude_a, latitude_b, longitude_b);
+	double result = haversine_helper(latitude_a, longitude_a, latitude_b, longitude_b, false);
 
 	printf("%f\n", result * 1.3);
 	return 0;

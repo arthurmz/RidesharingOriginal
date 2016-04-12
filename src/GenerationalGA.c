@@ -121,47 +121,6 @@ void sort_by_objective(Population *pop, int obj){
 }
 
 
-
-
-
-/**
- * Atualiza os tempos de inserção no ponto de inserção até o fim da rota.
- * Ao mesmo tempo, se identificar uma situação onde não dá pra inserir, retorna false
- *
- * Diferentemente do update_times do nsga-ii. Este aqui atualiza sequencialmente
- * os tempos da rota à partir do ponto P inserido.
- *
- * é uma espécie de push_forward sem a aleatoriedade
- *
- * NÃO ESTÁ SENDO USADO.
- */
-bool update_times(Rota *rota, int p){
-	for (int i = p; i >= rota->length; i++){
-		Service *anterior = &rota->list[i-1];
-		Service *atual = &rota->list[i];
-		double at = get_earliest_time_service(atual);
-		double bt = get_latest_time_service(atual);
-
-		double tbs = minimal_time_between_services(anterior, atual);
-
-		atual->service_time = anterior->service_time - tbs;
-
-		if (atual->service_time > bt){
-			atual->service_time = bt;
-			return false;
-		}
-		else if (atual->service_time < at){
-			atual->service_time = at;
-		}
-	}
-	return true;
-}
-
-
-
-
-
-
 /**Minha dúvida sobre esse operador é:
  * ele pega as posições de inserção P e seu offset, coloca na rota e
  * recalcula todo mundo à partir do horário de saída do motorista?
@@ -199,9 +158,6 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		printf("Parâmetros inválidos\n");
 		return false;
 	}
-
-	if (rota->id == 67 && rota->length == 6 && carona->id == 666)
-		printf("achei meu caso particular\n");
 
 	clone_rota(rota, ROTA_CLONE);
 	bool isRotaValida = false;
@@ -386,7 +342,6 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 
 	int qtd_caronas_inserir = request->matchable_riders;
 	if (qtd_caronas_inserir == 0) return;
-
 	/*Configurando o index_array usado na aleatorização
 	 * da ordem de leitura dos caronas
 	 * Precisa fazer por causa do tamanho variável*/
@@ -479,7 +434,6 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
  */
 void repair(Individuo *offspring, Graph *g){
 	clean_riders_matches(g);
-	//find_bug_cromossomo(offspring, g, 20);
 	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
 		Rota *rota = &offspring->cromossomo[i];
 
@@ -655,7 +609,7 @@ bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoe
 		Service * ant = &ROTA_CLONE_PUSH->list[i-1];
 		double bt = get_latest_time_service(atual);
 
-		double waiting_time = atual->service_time - ant->service_time - haversine(ant, atual);
+		double waiting_time = atual->service_time - ant->service_time -  minimal_time_between_services(ant, atual);
 		pushf = fmax(0, pushf - waiting_time);
 		pushf = fmin(pushf, bt - atual->service_time);
 

@@ -126,7 +126,6 @@ inline int get_random_carona_position(Rota * rota){
 	return position;
 }
 
-
 /*Aloca uma nova população de tamanho max_capacity
  * Cada elemento de list é um ponteiro pra indivíduo NÃO ALOCADO*/
 Population* new_empty_population(int max_capacity){
