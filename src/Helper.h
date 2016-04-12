@@ -38,5 +38,6 @@ bool find_bug_population(Population * p, int quemChama);
 bool fig_bug_rota2(Rota * rota);
 bool find_bug_idv(Individuo * idv);
 bool find_bug_pop2(Population * parents);
+bool verifica_populacao(Population *p);
 
 #endif /* HELPER_H_ */

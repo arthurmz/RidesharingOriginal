@@ -386,7 +386,7 @@ void insere_carona_aleatoria_individuo(Individuo * ind){
 
 
 /*seleção por torneio, k = 2*/
-Individuo * tournamentSelection(Population * parents, Graph * g){
+Individuo * tournamentSelection(Population * parents){
 	int pos = rand() % parents->size;
 	Individuo * idv1 = parents->list[pos];
 	pos = rand() % parents->size;
@@ -697,8 +697,8 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 	offspring->size = 0;//Tamanho = 0, mas considera todos já alocados
 	int i = 0;
 	while (offspring->size < parents->size){
-		Individuo *parent1 = tournamentSelection(parents, g);
-		Individuo *parent2 = tournamentSelection(parents, g);
+		Individuo *parent1 = tournamentSelection(parents);
+		Individuo *parent2 = tournamentSelection(parents);
 
 		Individuo *offspring1 = offspring->list[i++];
 		Individuo *offspring2 = offspring->list[i];

@@ -124,6 +124,10 @@ int main(int argc,  char** argv){
 	printf("Número de riders combinados: %f\n", g->riders - children->list[0]->objetivos[3]);
 	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 
+	if(!verifica_populacao(children)){
+		printf("ERRO!");
+	}
+
 	print_to_file_decision_space(children,g,seed);
 	dealoc_full_population(parents);
 	dealoc_full_population(children);
