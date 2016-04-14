@@ -172,7 +172,6 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	for (int i = ultimaPos; i >= posicao_insercao; i--){
 		ROTA_CLONE->list[i+1] = ROTA_CLONE->list[i];
 	}
-
 	ant = &ROTA_CLONE->list[posicao_insercao-1];
 	atual = &ROTA_CLONE->list[posicao_insercao];
 	next = &ROTA_CLONE->list[posicao_insercao+1];
@@ -246,7 +245,7 @@ int desfaz_insercao_carona_rota(Rota *rota, int posicao_remocao){
 		printf("Erro ao desfazer a inserção\n");
 		return 0;
 	}
-
+	
 	int offset = 1;
 	for (int k = posicao_remocao+1; k < rota->length; k++){//encontrando o offset
 		if (rota->list[posicao_remocao].r == rota->list[k].r && !rota->list[k].is_source)
@@ -436,6 +435,20 @@ void repair(Individuo *offspring, Graph *g){
 	clean_riders_matches(g);
 	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
 		Rota *rota = &offspring->cromossomo[i];
+		
+		
+		//pra cada um dos services SOURCES na rota
+		/*for (int j = 1; j < rota->length-1; j++){
+			//Se é matched então algum SOURCE anterior já usou esse request
+			//Então deve desfazer a rota de j até o offset
+			if ((rota->list[j].is_source && rota->list[j].r->matched)){
+				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
+			}
+			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
+				rota->list[j].r->matched = true;
+				rota->list[j].r->id_rota_match = rota->id;
+			}
+		}*/
 
 		int j = 1;
 		//pra cada um dos services SOURCES na rota
