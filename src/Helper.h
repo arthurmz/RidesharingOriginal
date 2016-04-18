@@ -30,6 +30,7 @@ void print(Population *p);
 Graph *new_graph(int drivers, int riders, int total_requests);
 void print_to_file_decision_space(Population * p, Graph * g, unsigned int seed);
 void fill_array(int * array, int size);
+void increase_capacity(Rota *rota);
 bool contains(Request * motorista, Request *rider);
 int get_random_carona_position(Rota * rota);
 bool find_bug_rota(Rota * rota, int quemChama);
@@ -39,5 +40,6 @@ bool fig_bug_rota2(Rota * rota);
 bool find_bug_idv(Individuo * idv);
 bool find_bug_pop2(Population * parents);
 bool verifica_populacao(Population *p);
+bool verifica_individuo(Individuo * offspring);
 
 #endif /* HELPER_H_ */

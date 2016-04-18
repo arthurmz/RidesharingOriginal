@@ -129,5 +129,7 @@ Request ** index_array_rotas;//Array com os índices ordenados das rotas, da meno
 
 Graph * g;
 
+Individuo * individuo_global;
+
 
 #endif /* GENERATIONALGA_H_ */

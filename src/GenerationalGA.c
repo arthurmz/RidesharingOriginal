@@ -121,6 +121,38 @@ void sort_by_objective(Population *pop, int obj){
 }
 
 
+void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source){
+	Service * ant = NULL;
+	Service * atual = NULL;
+	Service * next = NULL;
+	double PF;
+	double nextTime;
+
+	int ultimaPos = rota->length-1;
+	//Empurra todo mundo depois da posição de inserção
+	for (int i = ultimaPos; i >= posicao_insercao; i--){
+		rota->list[i+1] = rota->list[i];
+	}
+	ant = &rota->list[posicao_insercao-1];
+	atual = &rota->list[posicao_insercao];
+	next = &rota->list[posicao_insercao+1];
+
+	atual->r = carona;
+	atual->is_source = is_source;
+	atual->offset = offset;
+	atual->service_time = calculate_service_time(atual, ant);
+
+	nextTime = calculate_service_time(next, atual);
+	PF = nextTime - next->service_time;
+	if (PF > 0) {
+		next->service_time+= PF;
+		if (posicao_insercao+2 < rota->length)
+			push_forward(rota, posicao_insercao+2, PF, true);
+	}
+	rota->length++;
+}
+
+
 /**Minha dúvida sobre esse operador é:
  * ele pega as posições de inserção P e seu offset, coloca na rota e
  * recalcula todo mundo à partir do horário de saída do motorista?
@@ -161,68 +193,11 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 
 	clone_rota(rota, ROTA_CLONE);
 	bool isRotaValida = false;
-	Service * ant = NULL;
-	Service * atual = NULL;
-	Service * next = NULL;
-	double PF;
-	double nextTime;
+	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
+	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
 
-	int ultimaPos = ROTA_CLONE->length-1;
-	//Empurra todo mundo depois da posição de inserção
-	for (int i = ultimaPos; i >= posicao_insercao; i--){
-		ROTA_CLONE->list[i+1] = ROTA_CLONE->list[i];
-	}
-	ant = &ROTA_CLONE->list[posicao_insercao-1];
-	atual = &ROTA_CLONE->list[posicao_insercao];
-	next = &ROTA_CLONE->list[posicao_insercao+1];
-
-	atual->r = carona;
-	atual->is_source = true;
-	atual->offset = offset;
-	atual->service_time = calculate_service_time(atual, ant);
-
-	nextTime = calculate_service_time(next, atual);
-	PF = nextTime - next->service_time;
-	if (PF > 0) {
-		next->service_time+= PF;
-		if (posicao_insercao+2 < ROTA_CLONE->length)
-			push_forward(ROTA_CLONE, posicao_insercao+2, PF, true);
-	}
-	ROTA_CLONE->length++;
-
-	//Empurra todo mundo depois da posição do offset
-	for (int i = ultimaPos+1; i >= posicao_insercao + offset; i--){
-		ROTA_CLONE->list[i+1] = ROTA_CLONE->list[i];
-	}
-	ant = &ROTA_CLONE->list[posicao_insercao+offset-1];
-	atual = &ROTA_CLONE->list[posicao_insercao+offset];
-	next = &ROTA_CLONE->list[posicao_insercao+offset+1];
-
-	atual->r = carona;
-	atual->is_source = false;
-	atual->offset = 0;
-	atual->service_time = calculate_service_time(atual, ant);
-
-	nextTime = calculate_service_time(next, atual);
-	PF = nextTime - next->service_time;
-	if (PF > 0) {
-		next->service_time+= PF;
-		if (posicao_insercao+offset+2 < ROTA_CLONE->length){
-			push_forward(ROTA_CLONE, posicao_insercao+offset+2, PF, true);
-		}
-	}
-	ROTA_CLONE->length++;
-
-	//Aumentar a capacidade se tiver chegando no limite
-	if (ROTA_CLONE->length == ROTA_CLONE->capacity - 4){
-		ROTA_CLONE->capacity += MAX_SERVICES_MALLOC_ROUTE;
-		ROTA_CLONE->list = realloc(ROTA_CLONE->list, ROTA_CLONE->capacity * sizeof(Service));
-	}
-	//Aumentar a capacidade se tiver chegando no limite
-	if (rota->length == rota->capacity - 4){
-		rota->capacity += MAX_SERVICES_MALLOC_ROUTE;
-		rota->list = realloc(rota->list, rota->capacity * sizeof(Service));
-	}
+	increase_capacity(ROTA_CLONE);
+	increase_capacity(rota);
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
 
@@ -347,7 +322,6 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 	for (int l = 0; l < qtd_caronas_inserir; l++){
 		index_array_caronas_inserir[l] = l;
 	}
-
 	shuffle(index_array_caronas_inserir, qtd_caronas_inserir);
 
 	for (int z = 0; z < qtd_caronas_inserir; z++){
@@ -358,14 +332,20 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 		if (!carona->matched){
 			if (try_all_offsets){
 				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+					//Situação antes de inserir
+					int irm = carona->id_rota_match;
+					bool mt = carona->matched;
 					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+					if(!verifica_individuo(individuo_global)){
+						printf("breakpoint\n");
+						verifica_individuo(individuo_global);
+					}
 					if(inseriu) break;
 				}
 			}
 			else{
 				int offset = get_random_int(1, rota->length - posicao_inicial);
-				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-				if(inseriu) break;
+				insere_carona_rota(rota, carona, posicao_inicial, offset, true);
 			}
 		}
 	}
@@ -376,6 +356,7 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
  * IMPORTANTE: Antes de chamar, todos os caronas já feito match devem estar no grafo
  */
 void insere_carona_aleatoria_individuo(Individuo * ind){
+	individuo_global = ind;
 	shuffle(index_array_drivers,g->drivers);
 	for (int i = 0; i < ind->size; i++){
 		int j = index_array_drivers[i];
@@ -416,7 +397,6 @@ void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, I
 
 		repair(offspring1, g);
 		insere_carona_aleatoria_individuo(offspring1);
-
 		repair(offspring2, g);
 		insere_carona_aleatoria_individuo(offspring2);
 	}
@@ -436,32 +416,17 @@ void repair(Individuo *offspring, Graph *g){
 	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
 		Rota *rota = &offspring->cromossomo[i];
 		
-		
 		//pra cada um dos services SOURCES na rota
-		/*for (int j = 1; j < rota->length-1; j++){
+		for (int j = 1; j < rota->length-1; j++){
 			//Se é matched então algum SOURCE anterior já usou esse request
 			//Então deve desfazer a rota de j até o offset
-			if ((rota->list[j].is_source && rota->list[j].r->matched)){
+			if (rota->list[j].is_source && rota->list[j].r->matched){
 				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
 			}
 			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
 				rota->list[j].r->matched = true;
 				rota->list[j].r->id_rota_match = rota->id;
 			}
-		}*/
-
-		int j = 1;
-		//pra cada um dos services SOURCES na rota
-		while (j < (rota->length -1) ) {
-			//Se é matched então algum SOURCE anterior já usou esse request
-			//Então deve desfazer a rota de j até o offset
-			if ((rota->list[j].is_source && rota->list[j].r->matched)){
-				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
-			}
-			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
-				rota->list[j].r->matched = true;
-			}
-			j++;
 		}
 	}
 }
@@ -718,8 +683,8 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 
 		crossover(parent1, parent2, offspring1, offspring2, g, crossoverProbability);
 
-		mutation(offspring1, g, mutationProbability);
-		mutation(offspring2, g, mutationProbability);
+		//mutation(offspring1, g, mutationProbability);
+		//mutation(offspring2, g, mutationProbability);
 		offspring->size += 2;
 	}
 }
