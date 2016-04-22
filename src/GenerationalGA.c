@@ -336,10 +336,6 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 					int irm = carona->id_rota_match;
 					bool mt = carona->matched;
 					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-					if(!verifica_individuo(individuo_global)){
-						printf("breakpoint\n");
-						verifica_individuo(individuo_global);
-					}
 					if(inseriu) break;
 				}
 			}
@@ -422,6 +418,7 @@ void repair(Individuo *offspring, Graph *g){
 			//Então deve desfazer a rota de j até o offset
 			if (rota->list[j].is_source && rota->list[j].r->matched){
 				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
+				j--;
 			}
 			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
 				rota->list[j].r->matched = true;
