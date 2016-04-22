@@ -680,8 +680,8 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 
 		crossover(parent1, parent2, offspring1, offspring2, g, crossoverProbability);
 
-		//mutation(offspring1, g, mutationProbability);
-		//mutation(offspring2, g, mutationProbability);
+		mutation(offspring1, g, mutationProbability);
+		mutation(offspring2, g, mutationProbability);
 		offspring->size += 2;
 	}
 }
