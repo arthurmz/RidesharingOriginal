@@ -81,8 +81,7 @@ int main(int argc,  char** argv){
 		 Service *destino = &idv->cromossomo[i].list[1];
 		 double min_time = minimal_time_between_services(origem, destino);
 		 drivers_total_time += min_time;
-		 double hav_temp = haversine(origem, destino, true);
-		 //hav_temp = round(hav_temp * 10.0)/10.0;
+		 double hav_temp = haversine(origem, destino);
 		 drivers_total_distance += hav_temp;
 		 double diff_tempo = destino->r->delivery_earliest_time - origem->r->pickup_earliest_time;
 		 double round_diff_tempo = round(diff_tempo * 10.0)/10.0;

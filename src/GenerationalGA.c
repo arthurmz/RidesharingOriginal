@@ -190,9 +190,12 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		printf("Parâmetros inválidos\n");
 		return false;
 	}
+	if (rota->id == 3 && carona->id == 368 && rota->length == 2)
+		printf("Condição especial");
 
 	clone_rota(rota, ROTA_CLONE);
 	bool isRotaValida = false;
+	double min_time = minimal_time_between_services(&rota->list[0], &rota->list[1]);
 	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
 	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
 
@@ -333,8 +336,6 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 			if (try_all_offsets){
 				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
 					//Situação antes de inserir
-					int irm = carona->id_rota_match;
-					bool mt = carona->matched;
 					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
 					if(inseriu) break;
 				}
@@ -432,7 +433,7 @@ void repair(Individuo *offspring, Graph *g){
 bool swap_rider(Rota * rota){
 	if (rota->length < 6) return false;
 	clone_rota(rota, ROTA_CLONE1);
-	int ponto_swap = get_random_int(1, ROTA_CLONE1->length-3);
+	int ponto_swap = get_random_int(1, ROTA_CLONE1->length-4);
 	Service service_temp = ROTA_CLONE1->list[ponto_swap];
 	ROTA_CLONE->list[ponto_swap] = ROTA_CLONE1->list[ponto_swap+1];
 	ROTA_CLONE->list[ponto_swap+1] = service_temp;

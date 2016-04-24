@@ -17,9 +17,7 @@ inline double round_2_decimal(double n){
 
 //True se a <= b, com diferença < epsilon
 bool leq(double a, double b){
-	//if ((a > b) && a - b < 0.2 && a - b >= 0.1)
-		//printf("quase dava certo");
-	return ((a <= b) || (a - b) < 1);
+	return a <= b || (a - b) < 1;
 }
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
@@ -34,10 +32,10 @@ double distancia_percorrida(Rota * rota){
 	for (int i = 0; i < rota->length -1; i++){
 		Service *a = &rota->list[i];
 		Service *b = &rota->list[i+1];
-		accDistance += haversine(a,b, false);
+		accDistance += haversine(a,b);
 	}
 
-	return round_2_decimal(accDistance);
+	return accDistance;
 }
 
 /*Distância em km ORIGINAL*/
@@ -52,9 +50,7 @@ double haversine_helper_or(double lat1, double lon1, double lat2, double lon2){
 
 	double a = pow (sin(dLat/2),2) + pow(sin(dLon/2),2) * cos(lat1) * cos(lat2);
 	double c = 2 * asin(sqrt(a));
-	//return R * c;
-	return round_2_decimal(R * c);
-	//return round((R * c) * 10.0)/10.0;
+	return R * c;
 }
 
 /** rosetacode */
@@ -73,7 +69,7 @@ double haversine_helper_ros(double th1, double ph1, double th2, double ph2){
 }
 
 //Versão aproximada e mais rápida
-double haversine_helper(double lat1, double lon1, double lat2, double lon2, bool round){
+double haversine_helper(double lat1, double lon1, double lat2, double lon2){
 	const double R = 6371;//Recomendado. não mudar
 	const double to_rad = 3.1415926536 / 180;
 
@@ -85,14 +81,11 @@ double haversine_helper(double lat1, double lon1, double lat2, double lon2, bool
 	double x = (lon2 - lon1) * cos((lat1 + lat2) / 2);
 	double y = (lat2 - lat1);
 	double result = sqrt(x * x + y * y) * R;
-	if (round)
-		return round_2_decimal(result);
-	else
-		return result;
+	return result;
 }
 
 /** Distância entre os services */
-double haversine(Service *a, Service *b, bool round){
+double haversine(Service *a, Service *b){
 	double lat1, long1, lat2, long2;
 	if (a->is_source){
 		lat1 = a->r->pickup_location_latitude;
@@ -111,7 +104,7 @@ double haversine(Service *a, Service *b, bool round){
 		lat2 = b->r->delivery_location_latitude;
 		long2 = b->r->delivery_location_longitude;
 	}
-	return haversine_helper(lat1, long1, lat2, long2, round);
+	return haversine_helper(lat1, long1, lat2, long2);
 }
 
 /** Retorna o tempo necessário para ir do ponto
@@ -120,15 +113,14 @@ double haversine(Service *a, Service *b, bool round){
  */
 double minimal_time_request(Request *rq){
 	double distance = haversine_helper(rq->pickup_location_latitude, rq->pickup_location_longitude,
-			rq->delivery_location_latitude, rq->delivery_location_longitude, false);
-	double result = ceil(distance / VEHICLE_SPEED * 60.0);
-	return result;
+			rq->delivery_location_latitude, rq->delivery_location_longitude);
+	return distance / VEHICLE_SPEED * 60.0;
 }
 
 /*Tempo de viagem em minutos entre o ponto A e o ponto B*/
 double minimal_time_between_services(Service *a, Service *b){
-	double distance = haversine(a, b, false);
-	return ceil(distance / VEHICLE_SPEED * 60);
+	double distance = haversine(a, b);
+	return distance / VEHICLE_SPEED * 60;
 }
 
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada
@@ -220,7 +212,7 @@ bool is_carga_dentro_limite(Rota *rota){
 bool is_distancia_motorista_respeitada(Rota * rota){
 	Service * source = &rota->list[0];
 	Service * destiny = &rota->list[rota->length-1];
-	double MTD = AD + BD * haversine(source, destiny, true);//Maximum Travel Distance
+	double MTD = AD + (BD * haversine(source, destiny));//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
 	return leq(accDistance, MTD);
 }
@@ -229,7 +221,7 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 bool is_tempo_respeitado(Rota *rota, int i, int j){
 	Service * source = &rota->list[i];
 	Service * destiny = &rota->list[j];
-	double MTT = ceil(AT + BT * minimal_time_between_services(source, destiny));
+	double MTT = AT + (BT * minimal_time_between_services(source, destiny));
 	double accTime = tempo_gasto_rota(rota, i, j);
 	return leq(accTime, MTT);
 }

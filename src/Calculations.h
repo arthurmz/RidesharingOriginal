@@ -11,8 +11,8 @@
 #include "GenerationalGA.h"
 
 double distancia_percorrida(Rota * rota);
-double haversine(Service *a, Service *b, bool round);
-double haversine_helper(double lat1, double lon1, double lat2, double lon2, bool round);
+double haversine(Service *a, Service *b);
+double haversine_helper(double lat1, double lon1, double lat2, double lon2);
 double minimal_time_between_services(Service *a, Service *b);
 double minimal_time_request(Request *rq);
 double tempo_gasto_rota(Rota *rota, int i, int j);
