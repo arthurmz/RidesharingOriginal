@@ -31,7 +31,6 @@ Graph *new_graph(int drivers, int riders, int total_requests);
 void print_to_file_decision_space(Population * p, Graph * g, unsigned int seed);
 void fill_array(int * array, int size);
 void increase_capacity(Rota *rota);
-bool contains(Request * motorista, Request *rider);
 int get_random_carona_position(Rota * rota);
 bool find_bug_rota(Rota * rota, int quemChama);
 int find_bug_cromossomo(Individuo *offspring, Graph *g, int quemChama);

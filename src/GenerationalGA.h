@@ -29,9 +29,15 @@ typedef struct Request{
 	double delivery_earliest_time;
 	double delivery_latest_time;
 
-
+	/**Para o motorista: O número de riders que podem fazer match
+	 * Para o carona: O número de motoristas que podem fazer match
+	 */
 	int matchable_riders;//Somente para o caso do motorista: O número de riders que podem fazer match
-	struct Request ** matchable_riders_list;//Só é preenchida se este for um Driver
+	/**
+	 * Se esse request for um motorista, a lista contém os caronas que podem fazer match, e
+	 * vice versa.
+	 */
+	struct Request ** matchable_riders_list;
 }Request;
 
 /*Gene of a solution*/
@@ -115,7 +121,7 @@ void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
 void repair(Individuo *offspring, Graph *g);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
-bool push_backward(Rota * rota, int position, bool manter_alteracoes);
+bool push_backward(Rota * rota, int position, double pushb, bool manter_alteracoes);
 bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoes);
 
 

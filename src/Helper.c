@@ -101,15 +101,6 @@ void clone_rota(Rota * rota, Rota *cloneRota){
 	}
 }
 
-/** Verifica se o carona informado existe na lista de caronas matchables */
-bool contains(Request * motorista, Request *rider){
-	for (int i = 0; i < motorista->matchable_riders; i ++){
-		if (motorista->matchable_riders_list[i] == rider)
-			return true;
-	}
-	return false;
-}
-
 /** Retorna uma posição de carona aleatória
  * da rota informada
  */
@@ -151,7 +142,7 @@ Graph *new_graph(int drivers, int riders, int total_requests){
 		if (i < drivers)
 			g->request_list[i].matchable_riders_list = calloc(riders, sizeof(Request*));
 		else
-			g->request_list[i].matchable_riders_list = NULL;
+			g->request_list[i].matchable_riders_list = calloc(drivers, sizeof(Request*));
 	}
 	return g;
 }
