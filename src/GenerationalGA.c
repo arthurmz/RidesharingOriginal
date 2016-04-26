@@ -353,7 +353,6 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
  * IMPORTANTE: Antes de chamar, todos os caronas já feito match devem estar no grafo
  */
 void insere_carona_aleatoria_individuo(Individuo * ind){
-	individuo_global = ind;
 	shuffle(index_array_drivers,g->drivers);
 	for (int i = 0; i < ind->size; i++){
 		int j = index_array_drivers[i];

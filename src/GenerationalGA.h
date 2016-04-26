@@ -105,8 +105,6 @@ typedef struct Graph{
 
 //Graph *new_graph(int drivers, int riders, int total_requests);
 void malloc_rota_clone();
-bool update_times(Rota *rota, int p);
-bool crowded_comparison_operator(Individuo *a, Individuo *b);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets);
 void insere_carona_aleatoria_individuo(Individuo * ind);
@@ -114,9 +112,7 @@ int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
 double evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
-void free_population(Population *population);
 void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability );
-void empty_front_list(Fronts * f);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
 void repair(Individuo *offspring, Graph *g);
@@ -134,8 +130,5 @@ int * index_array_caronas_inserir;
 Request ** index_array_rotas;//Array com os índices ordenados das rotas, da menor pra maior qtd de matchable_riders
 
 Graph * g;
-
-Individuo * individuo_global;
-
 
 #endif /* GENERATIONALGA_H_ */

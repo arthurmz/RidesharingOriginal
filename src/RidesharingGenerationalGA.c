@@ -122,7 +122,8 @@ int main(int argc,  char** argv){
 	print(children);
 	printf("Número de riders combinados: %f\n", g->riders - children->list[0]->objetivos[3]);
 	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
-
+	printf("Seed: %u\n", seed);
+	
 	if(!verifica_populacao(children)){
 		printf("ERRO!");
 	}
