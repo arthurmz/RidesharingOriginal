@@ -128,15 +128,6 @@ double minimal_time_between_services(Service *a, Service *b){
  * Os tempos deve estar configurados corretamente nos services*/
 double tempo_gasto_rota(Rota *rota, int i, int j){
 	return rota->list[j].service_time - rota->list[i].service_time;
-
-	/*double accTime =0;
-	for (int k = i; k < j; k++){
-		Service *a = &rota->list[k];
-		Service *b = &rota->list[k+1];
-		accTime += b->service_time - a->service_time;
-		//accTime += time_between_services(a,b);
-	}
-	return accTime;*/
 }
 
 /**Calcula o service_time mais cedo possível para actual. Baseado

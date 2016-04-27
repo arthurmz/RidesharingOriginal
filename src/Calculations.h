@@ -27,6 +27,7 @@ bool is_rota_valida(Rota *rota);
 double get_earliest_time_service(Service * atual);
 double get_latest_time_service(Service * atual);
 int get_random_int(int minimum_number, int max_number);
+double minimal_time_request(Request *rq);
 double round_2_decimal(double n);
 
 #endif /* CALCULATIONS_H_ */

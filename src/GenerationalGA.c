@@ -260,7 +260,7 @@ void evaluate_objective_functions_pop(Population* p, Graph *g){
 /**Avalia as funções objetivo de um indivíduo
  * sem verificar o grafo
  */
-double evaluate_objective_functions(Individuo *idv, Graph *g){
+void evaluate_objective_functions(Individuo *idv, Graph *g){
 	double distance = 0;
 	double vehicle_time = 0;
 	double rider_time = 0;
@@ -303,7 +303,6 @@ double evaluate_objective_functions(Individuo *idv, Graph *g){
 			+beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS]
 			+epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS]
 			+sigma * idv->objetivos[RIDERS_UNMATCHED];
-	return idv->objective_function;
 
 }
 
@@ -311,10 +310,8 @@ double evaluate_objective_functions(Individuo *idv, Graph *g){
 
 /*Insere uma quantidade variável de caronas na rota informada
  * Utilizado na geração da população inicial, e na reparação dos indivíduos quebrados
- * try_all_offsets: se true então tenta inserir o destino em cada um dos pontos subsequentes à p na rota
- *
  * IMPORTANTE: Antes de chamar, os caronas devem estar determinados.*/
-void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
+void insere_carona_aleatoria_rota(Rota* rota){
 	Request * request = &g->request_list[rota->id];
 
 	int qtd_caronas_inserir = request->matchable_riders;
@@ -331,18 +328,11 @@ void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets){
 		int p = index_array_caronas_inserir[z];
 		Request * carona = request->matchable_riders_list[p];
 		int posicao_inicial = get_random_int(1, rota->length-1);
-
 		if (!carona->matched){
-			if (try_all_offsets){
-				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
-					//Situação antes de inserir
-					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-					if(inseriu) break;
-				}
-			}
-			else{
-				int offset = get_random_int(1, rota->length - posicao_inicial);
-				insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+				//Situação antes de inserir
+				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+				if(inseriu) break;
 			}
 		}
 	}
@@ -356,7 +346,7 @@ void insere_carona_aleatoria_individuo(Individuo * ind){
 	shuffle(index_array_drivers,g->drivers);
 	for (int i = 0; i < ind->size; i++){
 		int j = index_array_drivers[i];
-		insere_carona_aleatoria_rota(&ind->cromossomo[j], true);
+		insere_carona_aleatoria_rota(&ind->cromossomo[j]);
 	}
 }
 
@@ -560,7 +550,7 @@ bool remove_insert(Rota * rota){
 	}
 
 	carona->matched = false;
-	insere_carona_aleatoria_rota(ROTA_CLONE1, true);
+	insere_carona_aleatoria_rota(ROTA_CLONE1);
 	if (is_rota_valida(ROTA_CLONE1)){
 		clone_rota(ROTA_CLONE1, rota);
 		return true;

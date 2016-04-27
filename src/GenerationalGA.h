@@ -106,11 +106,11 @@ typedef struct Graph{
 //Graph *new_graph(int drivers, int riders, int total_requests);
 void malloc_rota_clone();
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
-void insere_carona_aleatoria_rota(Rota* rota, bool try_all_offsets);
+void insere_carona_aleatoria_rota(Rota* rota);
 void insere_carona_aleatoria_individuo(Individuo * ind);
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
-double evaluate_objective_functions(Individuo *idv, Graph *g);
+void evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
 void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability );
 void sort_by_objective(Population *pop, int obj);
