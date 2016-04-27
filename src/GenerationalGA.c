@@ -35,91 +35,17 @@ void malloc_rota_clone(){
 	ROTA_CLONE_PUSH->list = calloc(MAX_SERVICES_MALLOC_ROUTE, sizeof(Service));
 }
 
-/*Pra poder usar a função qsort com N objetivos,
- * precisamos implementar os n algoritmos de compare*/
-int compare0(const void *p, const void *q) {
-    int ret;
-    Individuo * x = *(Individuo **)p;
-    Individuo * y = *(Individuo **)q;
-    if (x->objetivos[0] == y->objetivos[0])
-        ret = 0;
-    else if (x->objetivos[0] < y->objetivos[0])
-        ret = -1;
-    else
-        ret = 1;
-    return ret;
-}
-
-int compare1(const void *p, const void *q) {
-    int ret;
-    Individuo * x = *(Individuo **)p;
-    Individuo * y = *(Individuo **)q;
-    if (x->objetivos[1] == y->objetivos[1])
-        ret = 0;
-    else if (x->objetivos[1] < y->objetivos[1])
-        ret = -1;
-    else
-        ret = 1;
-    return ret;
-}
-
-int compare2(const void *p, const void *q) {
-    int ret;
-    Individuo * x = *(Individuo **)p;
-    Individuo * y = *(Individuo **)q;
-    if (x->objetivos[2] == y->objetivos[2])
-        ret = 0;
-    else if (x->objetivos[2] < y->objetivos[2])
-        ret = -1;
-    else
-        ret = 1;
-    return ret;
-}
-
-int compare3(const void *p, const void *q) {
-    int ret;
-    Individuo * x = *(Individuo **)p;
-    Individuo * y = *(Individuo **)q;
-    if (x->objetivos[3] == y->objetivos[3])
-        ret = 0;
-    else if (x->objetivos[3] < y->objetivos[3])
-        ret = -1;
-    else
-        ret = 1;
-    return ret;
-}
-
-int compare_rotas(const void *p, const void *q){
-	int ret;
-	Request * x = *(Request **)p;
-	Request * y = *(Request **)q;
-	if (x->matchable_riders == y->matchable_riders)
-		ret = 0;
-	else if (x->matchable_riders < y->matchable_riders)
-		ret = -1;
-	else
-		ret = 1;
-	return ret;
-}
-
-/*Ordena a população de acordo com o objetivo 0, 1, 2, 3*/
-void sort_by_objective(Population *pop, int obj){
-	switch(obj){
-		case 0:
-			qsort(pop->list, pop->size, sizeof(Individuo*), compare0 );
-			break;
-		case 1:
-			qsort(pop->list, pop->size, sizeof(Individuo*), compare1 );
-			break;
-		case 2:
-			qsort(pop->list, pop->size, sizeof(Individuo*), compare2 );
-			break;
-		case 3:
-			qsort(pop->list, pop->size, sizeof(Individuo*), compare3 );
-			break;
+/**
+ * Insere caronas aleatórias para todas as caronas da rota
+ * IMPORTANTE: Antes de chamar, todos os caronas já feito match devem estar no grafo
+ */
+void insere_carona_aleatoria_individuo(Individuo * ind){
+	shuffle(index_array_drivers,g->drivers);
+	for (int i = 0; i < ind->size; i++){
+		int j = index_array_drivers[i];
+		insere_carona_aleatoria_rota(&ind->cromossomo[j]);
 	}
 }
-
 
 void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source){
 	Service * ant = NULL;
@@ -213,6 +139,35 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	return isRotaValida;
 }
 
+/*Insere uma quantidade variável de caronas na rota informada
+ * Utilizado na geração da população inicial, e na reparação dos indivíduos quebrados
+ * IMPORTANTE: Antes de chamar, os caronas devem estar determinados.*/
+void insere_carona_aleatoria_rota(Rota* rota){
+	Request * request = &g->request_list[rota->id];
+
+	int qtd_caronas_inserir = request->matchable_riders;
+	if (qtd_caronas_inserir == 0) return;
+	/*Configurando o index_array usado na aleatorização
+	 * da ordem de leitura dos caronas
+	 * Precisa fazer por causa do tamanho variável*/
+	for (int l = 0; l < qtd_caronas_inserir; l++){
+		index_array_caronas_inserir[l] = l;
+	}
+	shuffle(index_array_caronas_inserir, qtd_caronas_inserir);
+
+	for (int z = 0; z < qtd_caronas_inserir; z++){
+		int p = index_array_caronas_inserir[z];
+		Request * carona = request->matchable_riders_list[p];
+		int posicao_inicial = get_random_int(1, rota->length-1);
+		if (!carona->matched){
+			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+				//Situação antes de inserir
+				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+				if(inseriu) break;
+			}
+		}
+	}
+}
 
 /** Remove o carona que tem source na posicção Posicao_remocao
  * Retorna o valor do offset para encontrar o destino do carona removido
@@ -248,12 +203,6 @@ int desfaz_insercao_carona_rota(Rota *rota, int posicao_remocao){
 void clean_riders_matches(Graph *g){
 	for (int i = g->drivers; i < g->total_requests; i++){
 		g->request_list[i].matched = false;
-	}
-}
-
-void evaluate_objective_functions_pop(Population* p, Graph *g){
-	for (int i = 0; i < p->size; i++){//Pra cada um dos indivíduos
-		evaluate_objective_functions(p->list[i], g);
 	}
 }
 
@@ -307,146 +256,125 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 }
 
 
-
-/*Insere uma quantidade variável de caronas na rota informada
- * Utilizado na geração da população inicial, e na reparação dos indivíduos quebrados
- * IMPORTANTE: Antes de chamar, os caronas devem estar determinados.*/
-void insere_carona_aleatoria_rota(Rota* rota){
-	Request * request = &g->request_list[rota->id];
-
-	int qtd_caronas_inserir = request->matchable_riders;
-	if (qtd_caronas_inserir == 0) return;
-	/*Configurando o index_array usado na aleatorização
-	 * da ordem de leitura dos caronas
-	 * Precisa fazer por causa do tamanho variável*/
-	for (int l = 0; l < qtd_caronas_inserir; l++){
-		index_array_caronas_inserir[l] = l;
-	}
-	shuffle(index_array_caronas_inserir, qtd_caronas_inserir);
-
-	for (int z = 0; z < qtd_caronas_inserir; z++){
-		int p = index_array_caronas_inserir[z];
-		Request * carona = request->matchable_riders_list[p];
-		int posicao_inicial = get_random_int(1, rota->length-1);
-		if (!carona->matched){
-			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
-				//Situação antes de inserir
-				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-				if(inseriu) break;
-			}
-		}
-	}
-}
-
-/**
- * Insere caronas aleatórias para todas as caronas da rota
- * IMPORTANTE: Antes de chamar, todos os caronas já feito match devem estar no grafo
- */
-void insere_carona_aleatoria_individuo(Individuo * ind){
-	shuffle(index_array_drivers,g->drivers);
-	for (int i = 0; i < ind->size; i++){
-		int j = index_array_drivers[i];
-		insere_carona_aleatoria_rota(&ind->cromossomo[j]);
+void evaluate_objective_functions_pop(Population* p, Graph *g){
+	for (int i = 0; i < p->size; i++){//Pra cada um dos indivíduos
+		evaluate_objective_functions(p->list[i], g);
 	}
 }
 
 
-/*seleção por torneio, k = 2*/
-Individuo * tournamentSelection(Population * parents){
-	int pos = rand() % parents->size;
-	Individuo * idv1 = parents->list[pos];
-	pos = rand() % parents->size;
-	Individuo * idv2 = parents->list[pos];
-
-	evaluate_objective_functions(idv1, g);
-	evaluate_objective_functions(idv2, g);
-
-	if (idv1->objective_function < idv2->objective_function)
-		return idv1;
-	else return idv2;
+/*Ordena a população de acordo com o objetivo 0, 1, 2, 3*/
+void sort_by_objective(Population *pop, int obj){
+	switch(obj){
+		case 0:
+			qsort(pop->list, pop->size, sizeof(Individuo*), compare0 );
+			break;
+		case 1:
+			qsort(pop->list, pop->size, sizeof(Individuo*), compare1 );
+			break;
+		case 2:
+			qsort(pop->list, pop->size, sizeof(Individuo*), compare2 );
+			break;
+		case 3:
+			qsort(pop->list, pop->size, sizeof(Individuo*), compare3 );
+			break;
+	}
 }
 
-void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, Individuo *offspring2, Graph *g, double crossoverProbability){
-	int rotaSize = g->drivers;
-	offspring1->size = rotaSize;
-	offspring2->size = rotaSize;
 
-	int crossoverPoint = get_random_int(1, rotaSize-2);
-	double accept = (double)rand() / RAND_MAX;
+int compare_rotas(const void *p, const void *q){
+	int ret;
+	Request * x = *(Request **)p;
+	Request * y = *(Request **)q;
+	if (x->matchable_riders == y->matchable_riders)
+		ret = 0;
+	else if (x->matchable_riders < y->matchable_riders)
+		ret = -1;
+	else
+		ret = 1;
+	return ret;
+}
 
-	if (accept < crossoverProbability){
 
-		copy_rota(parent2, offspring1, 0, crossoverPoint);
-		copy_rota(parent1, offspring1, crossoverPoint, rotaSize);
-		copy_rota(parent1, offspring2, 0, crossoverPoint);
-		copy_rota(parent2, offspring2, crossoverPoint, rotaSize);
+/*Tenta empurar os services uma certa quantidade de tempo
+ * retorna true se conseguiu fazer algum push forward
+ * forcar_clone:  Mantem as alterações mesmo se o push forward não for feito
+ * ou a rota for considerada inválida.*/
+bool push_forward(Rota * rota, int position, double pushf, bool forcar_clone){
+	clone_rota(rota, ROTA_CLONE_PUSH);
 
-		repair(offspring1, g);
-		insere_carona_aleatoria_individuo(offspring1);
-		repair(offspring2, g);
-		insere_carona_aleatoria_individuo(offspring2);
+	if (position == -1)
+		position = get_random_int(0, ROTA_CLONE_PUSH->length-1);
+	Service * atual = &ROTA_CLONE_PUSH->list[position];
+	double maxPushf = get_latest_time_service(atual) -  atual->service_time;
+
+	if (pushf == -1){
+		pushf = maxPushf * ((double)rand() / RAND_MAX);
 	}
 	else{
-		copy_rota(parent1, offspring1, 0, rotaSize);
-		copy_rota(parent2, offspring2, 0, rotaSize);
+		pushf = fmin (pushf, maxPushf);
 	}
+
+	if (pushf <= 0) return false;
+
+	atual->service_time+= pushf;
+
+	for (int i = position+1; i < ROTA_CLONE_PUSH->length; i++){
+		if (pushf == 0)
+			break;
+		atual = &ROTA_CLONE_PUSH->list[i];
+		Service * ant = &ROTA_CLONE_PUSH->list[i-1];
+		double bt = get_latest_time_service(atual);
+
+		double waiting_time = atual->service_time - ant->service_time -  minimal_time_between_services(ant, atual);
+		pushf = fmax(0, pushf - waiting_time);
+		pushf = fmin(pushf, bt - atual->service_time);
+
+		atual->service_time+= pushf;
+	}
+	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
+	if (rotaValida || forcar_clone){
+		clone_rota(ROTA_CLONE_PUSH, rota);
+	}
+	return rotaValida;
 }
 
+/*Tenta empurar os services uma certa quantidade de tempo
+ * Se position = -1, gera aleatoriamente a posição*/
+bool push_backward(Rota * rota, int position, double pushb, bool forcar_clone){
+	clone_rota(rota, ROTA_CLONE_PUSH);
 
-/**
- * Repara o indivíduo, retirando todas as caronas repetidas.
- * No fim, as caronas com match são registradas no grafo
- */
-void repair(Individuo *offspring, Graph *g){
-	clean_riders_matches(g);
-	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
-		Rota *rota = &offspring->cromossomo[i];
-		
-		//pra cada um dos services SOURCES na rota
-		for (int j = 1; j < rota->length-1; j++){
-			//Se é matched então algum SOURCE anterior já usou esse request
-			//Então deve desfazer a rota de j até o offset
-			if (rota->list[j].is_source && rota->list[j].r->matched){
-				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
-				j--;
-			}
-			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
-				rota->list[j].r->matched = true;
-				rota->list[j].r->id_rota_match = rota->id;
-			}
-		}
+	if (position == -1)
+		position = get_random_int(0, ROTA_CLONE_PUSH->length-1);
+	Service * atual = &ROTA_CLONE_PUSH->list[position];
+	double maxPushb = atual->service_time - get_earliest_time_service(atual);
+
+	if (pushb == -1){
+		pushb = maxPushb * ((double)rand() / RAND_MAX);
 	}
-}
-
-
-bool swap_rider(Rota * rota){
-	if (rota->length < 6) return false;
-	clone_rota(rota, ROTA_CLONE1);
-	int ponto_swap = get_random_int(1, ROTA_CLONE1->length-4);
-	Service service_temp = ROTA_CLONE1->list[ponto_swap];
-	ROTA_CLONE->list[ponto_swap] = ROTA_CLONE1->list[ponto_swap+1];
-	ROTA_CLONE->list[ponto_swap+1] = service_temp;
-
-	Service *ant = &ROTA_CLONE1->list[ponto_swap-1];
-	Service *atual = &ROTA_CLONE1->list[ponto_swap];
-	Service *next = &ROTA_CLONE1->list[ponto_swap+1];
-
-	atual->service_time = calculate_service_time(atual, ant);
-	double nextTime = calculate_service_time(next, atual);
-
-	double PF = nextTime - next->service_time;
-
-	bool ordemValida = is_ordem_respeitada(ROTA_CLONE1);
-	if (!ordemValida) return false;
-
-	push_forward(ROTA_CLONE1, ponto_swap+1, PF, true);
-
-	if(is_rota_valida(ROTA_CLONE1)){
-		clone_rota(ROTA_CLONE1, rota);
-		return true;
+	else{
+		pushb = fmin (pushb, maxPushb);
 	}
-	return false;
 
+	if (pushb <= 0) return false;
+
+	atual->service_time-= pushb;
+
+	for (int i = position+1; i < ROTA_CLONE_PUSH->length; i++){
+		if (pushb == 0)
+			break;
+		atual = &ROTA_CLONE_PUSH->list[i];
+		double at = get_earliest_time_service(atual);
+
+		pushb = fmin(pushb, atual->service_time - at);
+
+		atual->service_time-= pushb;
+	}
+	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
+	if (rotaValida || forcar_clone){
+		clone_rota(ROTA_CLONE_PUSH, rota);
+	}
+	return rotaValida;
 }
 
 
@@ -561,86 +489,63 @@ bool remove_insert(Rota * rota){
 	return false;
 }
 
-/*Tenta empurar os services uma certa quantidade de tempo
- * retorna true se conseguiu fazer algum push forward
- * forcar_clone:  Mantem as alterações mesmo se o push forward não for feito
- * ou a rota for considerada inválida.*/
-bool push_forward(Rota * rota, int position, double pushf, bool forcar_clone){
-	clone_rota(rota, ROTA_CLONE_PUSH);
 
-	if (position == -1)
-		position = get_random_int(0, ROTA_CLONE_PUSH->length-1);
-	Service * atual = &ROTA_CLONE_PUSH->list[position];
-	double maxPushf = get_latest_time_service(atual) -  atual->service_time;
+bool swap_rider(Rota * rota){
+	if (rota->length < 6) return false;
+	clone_rota(rota, ROTA_CLONE1);
+	int ponto_swap = get_random_int(1, ROTA_CLONE1->length-4);
+	Service service_temp = ROTA_CLONE1->list[ponto_swap];
+	ROTA_CLONE->list[ponto_swap] = ROTA_CLONE1->list[ponto_swap+1];
+	ROTA_CLONE->list[ponto_swap+1] = service_temp;
 
-	if (pushf == -1){
-		pushf = maxPushf * ((double)rand() / RAND_MAX);
+	Service *ant = &ROTA_CLONE1->list[ponto_swap-1];
+	Service *atual = &ROTA_CLONE1->list[ponto_swap];
+	Service *next = &ROTA_CLONE1->list[ponto_swap+1];
+
+	atual->service_time = calculate_service_time(atual, ant);
+	double nextTime = calculate_service_time(next, atual);
+
+	double PF = nextTime - next->service_time;
+
+	bool ordemValida = is_ordem_respeitada(ROTA_CLONE1);
+	if (!ordemValida) return false;
+
+	push_forward(ROTA_CLONE1, ponto_swap+1, PF, true);
+
+	if(is_rota_valida(ROTA_CLONE1)){
+		clone_rota(ROTA_CLONE1, rota);
+		return true;
 	}
-	else{
-		pushf = fmin (pushf, maxPushf);
-	}
+	return false;
 
-	if (pushf <= 0) return false;
-
-	atual->service_time+= pushf;
-
-	for (int i = position+1; i < ROTA_CLONE_PUSH->length; i++){
-		if (pushf == 0)
-			break;
-		atual = &ROTA_CLONE_PUSH->list[i];
-		Service * ant = &ROTA_CLONE_PUSH->list[i-1];
-		double bt = get_latest_time_service(atual);
-
-		double waiting_time = atual->service_time - ant->service_time -  minimal_time_between_services(ant, atual);
-		pushf = fmax(0, pushf - waiting_time);
-		pushf = fmin(pushf, bt - atual->service_time);
-
-		atual->service_time+= pushf;
-	}
-	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
-	if (rotaValida || forcar_clone){
-		clone_rota(ROTA_CLONE_PUSH, rota);
-	}
-	return rotaValida;
 }
 
-/*Tenta empurar os services uma certa quantidade de tempo
- * Se position = -1, gera aleatoriamente a posição*/
-bool push_backward(Rota * rota, int position, double pushb, bool forcar_clone){
-	clone_rota(rota, ROTA_CLONE_PUSH);
 
-	if (position == -1)
-		position = get_random_int(0, ROTA_CLONE_PUSH->length-1);
-	Service * atual = &ROTA_CLONE_PUSH->list[position];
-	double maxPushb = atual->service_time - get_earliest_time_service(atual);
+/**
+ * Repara o indivíduo, retirando todas as caronas repetidas.
+ * No fim, as caronas com match são registradas no grafo
+ */
+void repair(Individuo *offspring, Graph *g){
+	clean_riders_matches(g);
+	for (int i = 0; i < offspring->size; i++){//Pra cada rota do idv
+		Rota *rota = &offspring->cromossomo[i];
 
-	if (pushb == -1){
-		pushb = maxPushb * ((double)rand() / RAND_MAX);
+		//pra cada um dos services SOURCES na rota
+		for (int j = 1; j < rota->length-1; j++){
+			//Se é matched então algum SOURCE anterior já usou esse request
+			//Então deve desfazer a rota de j até o offset
+			if (rota->list[j].is_source && rota->list[j].r->matched){
+				desfaz_insercao_carona_rota(rota, j);//Diminui length em duas unidades
+				j--;
+			}
+			else if (rota->list[j].is_source){//Somente "senão", pois o tamanho poderia ter diminuido aí em cima.
+				rota->list[j].r->matched = true;
+				rota->list[j].r->id_rota_match = rota->id;
+			}
+		}
 	}
-	else{
-		pushb = fmin (pushb, maxPushb);
-	}
-
-	if (pushb <= 0) return false;
-
-	atual->service_time-= pushb;
-
-	for (int i = position+1; i < ROTA_CLONE_PUSH->length; i++){
-		if (pushb == 0)
-			break;
-		atual = &ROTA_CLONE_PUSH->list[i];
-		double at = get_earliest_time_service(atual);
-
-		pushb = fmin(pushb, atual->service_time - at);
-
-		atual->service_time-= pushb;
-	}
-	bool rotaValida = is_rota_valida(ROTA_CLONE_PUSH);
-	if (rotaValida || forcar_clone){
-		clone_rota(ROTA_CLONE_PUSH, rota);
-	}
-	return rotaValida;
 }
+
 
 void mutation(Individuo *ind, Graph *g, double mutationProbability){
 	repair(ind, g);
@@ -680,6 +585,32 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 }
 
 
+void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, Individuo *offspring2, Graph *g, double crossoverProbability){
+	int rotaSize = g->drivers;
+	offspring1->size = rotaSize;
+	offspring2->size = rotaSize;
+
+	int crossoverPoint = get_random_int(1, rotaSize-2);
+	double accept = (double)rand() / RAND_MAX;
+
+	if (accept < crossoverProbability){
+
+		copy_rota(parent2, offspring1, 0, crossoverPoint);
+		copy_rota(parent1, offspring1, crossoverPoint, rotaSize);
+		copy_rota(parent1, offspring2, 0, crossoverPoint);
+		copy_rota(parent2, offspring2, crossoverPoint, rotaSize);
+
+		repair(offspring1, g);
+		insere_carona_aleatoria_individuo(offspring1);
+		repair(offspring2, g);
+		insere_carona_aleatoria_individuo(offspring2);
+	}
+	else{
+		copy_rota(parent1, offspring1, 0, rotaSize);
+		copy_rota(parent2, offspring2, 0, rotaSize);
+	}
+}
+
 
 /*Gera uma população de filhos, usando seleção, crossover e mutação*/
 void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability){
@@ -699,4 +630,88 @@ void crossover_and_mutation(Population *parents, Population *offspring,  Graph *
 		offspring->size += 2;
 	}
 }
+
+
+/*seleção por torneio, k = 2*/
+Individuo * tournamentSelection(Population * parents){
+	int pos = rand() % parents->size;
+	Individuo * idv1 = parents->list[pos];
+	pos = rand() % parents->size;
+	Individuo * idv2 = parents->list[pos];
+
+	evaluate_objective_functions(idv1, g);
+	evaluate_objective_functions(idv2, g);
+
+	if (idv1->objective_function < idv2->objective_function)
+		return idv1;
+	else return idv2;
+}
+
+
+/*Pra poder usar a função qsort com N objetivos,
+ * precisamos implementar os n algoritmos de compare*/
+int compare0(const void *p, const void *q) {
+    int ret;
+    Individuo * x = *(Individuo **)p;
+    Individuo * y = *(Individuo **)q;
+    if (x->objetivos[0] == y->objetivos[0])
+        ret = 0;
+    else if (x->objetivos[0] < y->objetivos[0])
+        ret = -1;
+    else
+        ret = 1;
+    return ret;
+}
+
+int compare1(const void *p, const void *q) {
+    int ret;
+    Individuo * x = *(Individuo **)p;
+    Individuo * y = *(Individuo **)q;
+    if (x->objetivos[1] == y->objetivos[1])
+        ret = 0;
+    else if (x->objetivos[1] < y->objetivos[1])
+        ret = -1;
+    else
+        ret = 1;
+    return ret;
+}
+
+int compare2(const void *p, const void *q) {
+    int ret;
+    Individuo * x = *(Individuo **)p;
+    Individuo * y = *(Individuo **)q;
+    if (x->objetivos[2] == y->objetivos[2])
+        ret = 0;
+    else if (x->objetivos[2] < y->objetivos[2])
+        ret = -1;
+    else
+        ret = 1;
+    return ret;
+}
+
+int compare3(const void *p, const void *q) {
+    int ret;
+    Individuo * x = *(Individuo **)p;
+    Individuo * y = *(Individuo **)q;
+    if (x->objetivos[3] == y->objetivos[3])
+        ret = 0;
+    else if (x->objetivos[3] < y->objetivos[3])
+        ret = -1;
+    else
+        ret = 1;
+    return ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

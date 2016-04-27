@@ -103,23 +103,31 @@ typedef struct Graph{
 }Graph;
 
 
-//Graph *new_graph(int drivers, int riders, int total_requests);
 void malloc_rota_clone();
+void insere_carona_aleatoria_individuo(Individuo * ind);
+void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Rota* rota);
-void insere_carona_aleatoria_individuo(Individuo * ind);
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
 void evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
-void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability );
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
+bool push_forward(Rota * rota, int position, double pushf, bool forcar_clone);
+bool push_backward(Rota * rota, int position, double pushb, bool forcar_clone);
+bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g);
+bool remove_insert(Rota * rota);
+bool swap_rider(Rota * rota);
 void repair(Individuo *offspring, Graph *g);
 void mutation(Individuo *ind, Graph *g, double mutationProbability);
-bool push_backward(Rota * rota, int position, double pushb, bool manter_alteracoes);
-bool push_forward(Rota * rota, int position, double pushf, bool manter_alteracoes);
-
+void crossover(Individuo * parent1, Individuo *parent2, Individuo *offspring1, Individuo *offspring2, Graph *g, double crossoverProbability);
+void crossover_and_mutation(Population *parents, Population *offspring,  Graph *g, double crossoverProbability, double mutationProbability );
+Individuo * tournamentSelection(Population * parents);
+int compare0(const void *p, const void *q);
+int compare1(const void *p, const void *q);
+int compare2(const void *p, const void *q);
+int compare3(const void *p, const void *q);
 
 int * index_array_drivers;
 int * index_array_drivers_transfer_rider;
