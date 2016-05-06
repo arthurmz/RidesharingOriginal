@@ -225,6 +225,7 @@ void shuffle(int *array, int n) {
     }
 }
 
+
 /*Desaloca a população, desalocando também os indivíduos*/
 void dealoc_full_population(Population *population){
 	if (population != NULL){

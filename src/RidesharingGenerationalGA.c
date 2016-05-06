@@ -15,8 +15,8 @@
 #include <float.h>
 #include <math.h>
 #include "Helper.h"
-#include "GenerationalGA.h"
 #include "Calculations.h"
+#include "GenerationalGA.h"
 
 void initialize_mem(Graph * g);
 void setup_matchable_riders(Graph * g);
@@ -68,11 +68,11 @@ int main(int argc,  char** argv){
 	clock_t tic = clock();
 	
 	Population * parents = generate_random_population(POPULATION_SIZE, g, true);
-	Population * children = generate_random_population(POPULATION_SIZE, g, false);
-	//evaluate_objective_functions_pop(parents, g);
+	Population * children = generate_random_population(POPULATION_SIZE, g, true);
+	evaluate_objective_functions_pop(parents, g);
 
 	//calculando o tempo mínimo de viagem dos motoristas
-	double drivers_total_time = 0;
+	/*double drivers_total_time = 0;
 	double drivers_total_distance = 0;
 	double tempo_total_que_deve_dar_igual_ao_artigo = 0;
 	Individuo * idv = children->list[0];
@@ -96,10 +96,8 @@ int main(int argc,  char** argv){
 	printf("tempo total dos motoristas: %f\n", drivers_total_time);
 	printf("distância total dos motoristas: %f\n", drivers_total_distance);
 	printf("TEMPO Total que deve dar igual ao artigo %f\n", tempo_total_que_deve_dar_igual_ao_artigo);
-	//return 0;
+	//return 0;*/
 
-
-	//clean_riders_matches(g);
 
 	int i = 0;
 	while(i < ITERATIONS){
@@ -107,9 +105,13 @@ int main(int argc,  char** argv){
 		crossover_and_mutation(parents, children, g, crossoverProbability, mutationProbability);
 		if (PRINT_ALL_GENERATIONS)
 			print(children);
+
+		evaluate_objective_functions_pop(children, g);
+
 		Population * temp = parents;
 		parents = children;
 		children = temp;
+
 		i++;
 	}
 	
@@ -129,6 +131,7 @@ int main(int argc,  char** argv){
 	}
 
 	print_to_file_decision_space(children,g,seed);
+
 	dealoc_full_population(parents);
 	dealoc_full_population(children);
 	//dealoc_empty_population(big_population);
