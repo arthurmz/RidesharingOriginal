@@ -87,14 +87,20 @@ void copy_rota(Individuo * origin, Individuo * destiny, int start, int end){
 /**Clona o conteúdo de uma rota em outra.
  * Para manter intacta a original, em caso da rota
  * clonada não servir*/
-void clone_rota(Rota * rota, Rota *cloneRota){
+void clone_rota(Rota * rota, Rota **cloneRotaAddr){
+	Rota * cloneRota = *cloneRotaAddr;
 	if (rota == cloneRota) {
 		printf("bug\n");
 		return;
 	}
 
+	if (cloneRota->capacity < rota->capacity){
+		cloneRota = realloc(cloneRota, rota->capacity * sizeof(Service));
+		cloneRota->capacity = rota->capacity;
+		*cloneRotaAddr =  cloneRota;
+	}
+
 	cloneRota->id = rota->id;
-	cloneRota->capacity = rota->capacity;
 	cloneRota->length = rota->length;
 	for (int i = 0; i < rota->length; i++){
 		cloneRota->list[i] = rota->list[i];
@@ -313,7 +319,7 @@ void fill_array(int * array, int size){
 /** Verifica se a rota está chegando no limite e aumente sua capacidade */
 void increase_capacity(Rota *rota){
 	//Aumentar a capacidade se tiver chegando no limite
-	if (rota->length == rota->capacity - 4){
+	if (rota->length >= rota->capacity - 4){
 		rota->capacity += MAX_SERVICES_MALLOC_ROUTE;
 		rota->list = realloc(rota->list, rota->capacity * sizeof(Service));
 		printf("Aumentando a capacidade da rota clone\n");
