@@ -128,6 +128,7 @@ int compare0(const void *p, const void *q);
 int compare1(const void *p, const void *q);
 int compare2(const void *p, const void *q);
 int compare3(const void *p, const void *q);
+int compare_obj_f(const void *p, const void *q);
 
 int * index_array_drivers;
 int * index_array_drivers_transfer_rider;

@@ -40,6 +40,7 @@ int main(int argc,  char** argv){
 	int POPULATION_SIZE;
 	int ITERATIONS;
 	int PRINT_ALL_GENERATIONS = 0;
+	int EVAL_EACH_GENERATION = 1;
 	double crossoverProbability = 0.95;
 	double mutationProbability = 0.1;
 	char *filename = argv[1];
@@ -61,6 +62,7 @@ int main(int argc,  char** argv){
 	initialize_mem(g);
 	setup_matchable_riders(g);
 	print_qtd_matches_minima(g);
+	double objective_function_per_gen[ITERATIONS];
 	printf("Seed: %u\n", seed);
 
 
@@ -102,15 +104,20 @@ int main(int argc,  char** argv){
 	int i = 0;
 	while(i < ITERATIONS){
 		printf("Iteracao %d...\n", i);
-		crossover_and_mutation(parents, children, g, crossoverProbability, mutationProbability);
-		if (PRINT_ALL_GENERATIONS)
-			print(children);
 
 		evaluate_objective_functions_pop(children, g);
-
+		if (EVAL_EACH_GENERATION){
+			sort_by_objective(children, OBJECTIVE_FUNCTION);
+			objective_function_per_gen[i] = children->list[0]->objective_function;
+		}
 		Population * temp = parents;
 		parents = children;
 		children = temp;
+
+		crossover_and_mutation(parents, children, g, crossoverProbability, mutationProbability);
+		if (PRINT_ALL_GENERATIONS){
+			print(children);
+		}
 
 		i++;
 	}
@@ -131,6 +138,10 @@ int main(int argc,  char** argv){
 	}
 
 	print_to_file_decision_space(children,g,seed);
+
+	if (EVAL_EACH_GENERATION){
+		print_objective_function_evolution(ITERATIONS, objective_function_per_gen);
+	}
 
 	dealoc_full_population(parents);
 	dealoc_full_population(children);

@@ -279,6 +279,9 @@ void sort_by_objective(Population *pop, int obj){
 		case 3:
 			qsort(pop->list, pop->size, sizeof(Individuo*), compare3 );
 			break;
+		case 4 :
+			qsort(pop->list, pop->size, sizeof(Individuo*), compare_obj_f );
+			break;
 	}
 }
 
@@ -704,6 +707,19 @@ int compare3(const void *p, const void *q) {
     if (x->objetivos[3] == y->objetivos[3])
         ret = 0;
     else if (x->objetivos[3] < y->objetivos[3])
+        ret = -1;
+    else
+        ret = 1;
+    return ret;
+}
+
+int compare_obj_f(const void *p, const void *q) {
+    int ret;
+    Individuo * x = *(Individuo **)p;
+    Individuo * y = *(Individuo **)q;
+    if (x->objective_function == y->objective_function)
+        ret = 0;
+    else if (x->objective_function < y->objective_function)
         ret = -1;
     else
         ret = 1;

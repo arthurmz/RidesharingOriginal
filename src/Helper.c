@@ -180,6 +180,7 @@ Graph * parse_file(char *filename){
 	sscanf(linha_temp, "%i", &drivers);
 	fgets(linha_temp, 1000, fp);
 	sscanf(linha_temp, "%i", &riders);
+	printf("Riders: %d Drivers: %d\n", riders, drivers);
 	Graph * g = new_graph(drivers, riders, total_requests);
 
 	int index_request = 0;
@@ -204,9 +205,9 @@ Graph * parse_file(char *filename){
 				&rq->delivery_earliest_time,
 				&rq->delivery_latest_time);
 
-		double minimal_time = minimal_time_request(rq);
-		rq->delivery_earliest_time = rq->pickup_earliest_time + minimal_time;
-		rq->delivery_latest_time = rq->pickup_latest_time + minimal_time;
+		//double minimal_time = minimal_time_request(rq);
+		//rq->delivery_earliest_time = rq->pickup_earliest_time + minimal_time;
+		//rq->delivery_latest_time = rq->pickup_latest_time + minimal_time;
 		if(rq->id < drivers)
 			rq->driver = true;
 		else
@@ -304,6 +305,19 @@ void print_to_file_decision_space(Population * p, Graph * g, unsigned int seed){
 
 			fprintf(fp, "\n");
 		}
+	}
+
+	fclose(fp);
+}
+
+/**
+ * Imprime uma lista de valores da função objetivo para cada geração
+ */
+void print_objective_function_evolution(int n_gen, double *obj_f){
+	FILE *fp=fopen("funcoes_objetivo.txt", "w");
+
+	for (int i = 0; i < n_gen; i++){
+		fprintf(fp, "%f\n",obj_f[i]);
 	}
 
 	fclose(fp);
