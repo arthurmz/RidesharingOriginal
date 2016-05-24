@@ -70,12 +70,10 @@ void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset
 
 	nextTime = calculate_service_time(next, atual);
 	PF = nextTime - next->service_time;
+	rota->length++;//Deve aumentar o tamanho antes de fazer o PF
 	if (PF > 0) {
-		next->service_time+= PF;
-		if (posicao_insercao+2 < rota->length)
-			push_forward(rota, posicao_insercao+2, PF, true);
+		push_forward(rota, posicao_insercao+1, PF, true);
 	}
-	rota->length++;
 }
 
 
