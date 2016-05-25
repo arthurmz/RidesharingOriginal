@@ -118,10 +118,9 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	clone_rota(rota, &ROTA_CLONE);
 	bool isRotaValida = false;
 	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
+	if (!is_rota_parcialmente_valida(ROTA_CLONE))
+		return false;
 	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
-
-	increase_capacity(ROTA_CLONE);
-	increase_capacity(rota);
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
 
@@ -129,6 +128,9 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 		carona->matched = true;
 		carona->id_rota_match = ROTA_CLONE->id;
 		clone_rota(ROTA_CLONE, &rota);
+
+		increase_capacity(ROTA_CLONE);
+		increase_capacity(rota);
 	}
 
 	return isRotaValida;
@@ -155,10 +157,12 @@ void insere_carona_aleatoria_rota(Rota* rota){
 		int p = index_array_caronas_inserir[z];
 		Request * carona = request->matchable_riders_list[p];
 		if (!carona->matched){
-			int posicao_inicial = get_random_int(1, rota->length-1);
-			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
-				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-				if(inseriu) break;
+			for (int x = 0; x < 2; x++){
+				int posicao_inicial = get_random_int(1, rota->length-1);
+				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+					if(inseriu) return;
+				}
 			}
 		}
 	}
@@ -427,10 +431,15 @@ bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g){
 	}
 
 	bool conseguiu = false;
-	int posicaoInserir = get_random_int(1, rotaInserir->length-1);
 	//Invalida o carona
 	caronaInserir->matched = false;
-	conseguiu = insere_carona_rota(rotaInserir, caronaInserir, posicaoInserir, 1, true);//TODO variar o offset
+
+	int posicaoInserir = get_random_int(1, rotaInserir->length-1);
+	for (int offset = 1; offset <= rotaInserir->length - posicaoInserir; offset++){
+		conseguiu = insere_carona_rota(rotaInserir, caronaInserir, posicaoInserir, offset, true);
+		if(conseguiu) break;
+	}
+
 	//Se conseguiu inserir, remove o carona do rotaRemover
 	if (conseguiu)
 		desfaz_insercao_carona_rota(rotaRemover,pos);

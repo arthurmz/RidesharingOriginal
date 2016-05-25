@@ -21,7 +21,7 @@ bool leq(double a, double b){
 }
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
-inline int get_random_int(int minimum_number, int max_number){
+int get_random_int(int minimum_number, int max_number){
 	int modulo = max_number + 1 - minimum_number;
 	return minimum_number + (rand() % modulo);
 }
@@ -199,6 +199,26 @@ bool is_carga_dentro_limite(Rota *rota){
 	return true;
 }
 
+
+/*Verifica se durante toda a rota a carga permanece dentro do limite
+ * PODE SER QUE UM PASSAGEIRO EMBARQUE MAS NÃO DESEMBARQUE - ÚTIL PARA AS ROTAS PARCIALMENTE CONSTRUÍDAS.*/
+bool is_carga_dentro_limite2(Rota *rota){
+	int temp_load = 0;
+	for (int i = 1; i < rota->length-1; i++){
+		Service *a = &rota->list[i];
+
+		if(a->is_source){
+			temp_load += RIDER_DEMAND;
+			if (temp_load > VEHICLE_CAPACITY) return false;
+		}
+		else{
+			temp_load -= RIDER_DEMAND;
+			if (temp_load < 0) return false;
+		}
+	}
+	return true;
+}
+
 /*Verifica se a distancia percorrida pelo motorista é respeitada*/
 bool is_distancia_motorista_respeitada(Rota * rota){
 	Service * source = &rota->list[0];
@@ -288,6 +308,15 @@ bool is_rota_valida(Rota *rota){
 
 	/*Verificando se os tempos de chegada em cada ponto atende às janelas de tempo de cada request (Driver e Rider)*/
 	if ( !is_dentro_janela_tempo(rota) || !is_carga_dentro_limite(rota) || !is_tempos_respeitados(rota) || !is_distancia_motorista_respeitada(rota) )
+		return false;
+	return true;
+}
+
+
+bool is_rota_parcialmente_valida(Rota *rota){
+
+	/*Verificando se os tempos de chegada em cada ponto atende às janelas de tempo de cada request (Driver e Rider)*/
+	if ( !is_dentro_janela_tempo(rota) || !is_carga_dentro_limite2(rota) || !is_tempos_respeitados(rota) || !is_distancia_motorista_respeitada(rota) )
 		return false;
 	return true;
 }
