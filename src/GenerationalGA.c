@@ -157,12 +157,10 @@ void insere_carona_aleatoria_rota(Rota* rota){
 		int p = index_array_caronas_inserir[z];
 		Request * carona = request->matchable_riders_list[p];
 		if (!carona->matched){
-			for (int x = 0; x < 2; x++){
-				int posicao_inicial = get_random_int(1, rota->length-1);
-				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
-					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-					if(inseriu) return;
-				}
+			int posicao_inicial = get_random_int(1, rota->length-1);
+			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+				if(inseriu) return;
 			}
 		}
 	}

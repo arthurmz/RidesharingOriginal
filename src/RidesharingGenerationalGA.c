@@ -40,7 +40,7 @@ int main(int argc,  char** argv){
 	int POPULATION_SIZE;
 	int ITERATIONS;
 	int PRINT_ALL_GENERATIONS = 0;
-	int EVAL_EACH_GENERATION = 1;
+	int EVAL_EACH_GENERATION = 0;
 	double crossoverProbability = 0.95;
 	double mutationProbability = 0.1;
 	char *filename = argv[1];

@@ -161,7 +161,7 @@ inline double get_latest_time_service(Service * atual){
 	return atual->r->delivery_latest_time;
 }
 
-bool is_dentro_janela_tempo(Rota * rota){
+bool is_dentro_janela_tempo_is_tempos_respeitados(Rota * rota){
 
 	for (int i = 0; i < rota->length-1; i++){
 		Service *source = &rota->list[i];
@@ -170,9 +170,16 @@ bool is_dentro_janela_tempo(Rota * rota){
 			Service *destiny = &rota->list[j];
 			if(destiny->is_source || source->r != destiny->r) continue;
 
+			//Janela de tempo
 			if ( ! ((leq(source->r->pickup_earliest_time, source->service_time) && leq(source->service_time, source->r->pickup_latest_time))
 				&& (leq(destiny->r->delivery_earliest_time, destiny->service_time) && leq(destiny->service_time, destiny->r->delivery_latest_time))))
 				return false;
+
+			/*Verifica se os tempos de todos os requests nessa rota estão sendo respeitados*/
+			if (!is_tempo_respeitado(rota, i, j)){
+				return false;
+			}
+			break;
 		}
 	}
 	return true;
@@ -237,24 +244,6 @@ bool is_tempo_respeitado(Rota *rota, int i, int j){
 	return leq(accTime, MTT) && accTime >= 0;//Não é válido se o tempo acumulado for negativo
 }
 
-/*Verifica se os tempos de todos os requests nessa rota estão sendo respeitados*/
-bool is_tempos_respeitados(Rota *rota){
-	for (int i = 0; i < rota->length-1; i++){//Pra cada um dos sources
-		Service *source = &rota->list[i];
-		if (!source->is_source) continue;
-		for (int j = i+1; j < rota->length; j++){//Repete o for até encontrar o destino
-			Service *destiny = &rota->list[j];
-			if(destiny->is_source || source->r != destiny->r) continue;
-
-			if (!is_tempo_respeitado(rota, i, j)){
-				return false;
-			}
-			break;
-		}
-	}
-	return true;
-}
-
 /*Verifica se a ordem de inserção e remoção dos riders é respeitada
  * Usar apenas no swap, pois só lá essa restrição pode ser quebrada*/
 bool is_ordem_respeitada(Rota * rota){
@@ -307,7 +296,7 @@ bool is_ordem_respeitada(Rota * rota){
 bool is_rota_valida(Rota *rota){
 
 	/*Verificando se os tempos de chegada em cada ponto atende às janelas de tempo de cada request (Driver e Rider)*/
-	if ( !is_dentro_janela_tempo(rota) || !is_carga_dentro_limite(rota) || !is_tempos_respeitados(rota) || !is_distancia_motorista_respeitada(rota) )
+	if (!is_carga_dentro_limite(rota) || !is_dentro_janela_tempo_is_tempos_respeitados(rota) || !is_distancia_motorista_respeitada(rota) )
 		return false;
 	return true;
 }
@@ -316,7 +305,7 @@ bool is_rota_valida(Rota *rota){
 bool is_rota_parcialmente_valida(Rota *rota){
 
 	/*Verificando se os tempos de chegada em cada ponto atende às janelas de tempo de cada request (Driver e Rider)*/
-	if ( !is_dentro_janela_tempo(rota) || !is_carga_dentro_limite2(rota) || !is_tempos_respeitados(rota) || !is_distancia_motorista_respeitada(rota) )
+	if (!is_carga_dentro_limite2(rota) || !is_dentro_janela_tempo_is_tempos_respeitados(rota) || !is_distancia_motorista_respeitada(rota) )
 		return false;
 	return true;
 }
