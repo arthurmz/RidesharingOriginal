@@ -265,6 +265,7 @@ void dealoc_fronts(Fronts * front){
 
 
 void print(Population *p){
+	printf("Vehicles' distance | Vehicles' time | Riders' time | Riders Unmatched\n");
 	for (int i = 0; i < p->size; i++){
 		Individuo *id = p->list[i];
 		printf("%f %f %f %f\n",id->objetivos[0], id->objetivos[1], id->objetivos[2], id->objetivos[3]);

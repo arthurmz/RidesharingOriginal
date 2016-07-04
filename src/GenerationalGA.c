@@ -118,8 +118,6 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	clone_rota(rota, &ROTA_CLONE);
 	bool isRotaValida = false;
 	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
-	if (!is_rota_parcialmente_valida(ROTA_CLONE))
-		return false;
 	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
@@ -157,10 +155,11 @@ void insere_carona_aleatoria_rota(Rota* rota){
 		int p = index_array_caronas_inserir[z];
 		Request * carona = request->matchable_riders_list[p];
 		if (!carona->matched){
-			int posicao_inicial = get_random_int(1, rota->length-1);
-			for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
-				bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
-				if(inseriu) return;
+			for (int posicao_inicial = 1; posicao_inicial < rota->length; posicao_inicial++){
+				for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+					bool inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+					if(inseriu) return;
+				}
 			}
 		}
 	}
@@ -249,10 +248,10 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 	double epsilon = 0.1;
 	double sigma = 0.1;
 	idv->objective_function =
-			alfa * idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP]
-			+beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS]
-			+epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS]
-			+sigma * idv->objetivos[RIDERS_UNMATCHED];
+			(alfa * idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP])
+			+(beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS])
+			+(epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS])
+			+(sigma * idv->objetivos[RIDERS_UNMATCHED]);
 
 }
 

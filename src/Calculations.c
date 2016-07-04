@@ -70,7 +70,7 @@ double haversine_helper_ros(double th1, double ph1, double th2, double ph2){
 
 //Versão aproximada e mais rápida
 double haversine_helper(double lat1, double lon1, double lat2, double lon2){
-	const double R = 6371;//Recomendado. não mudar
+	const double R = 6371;
 	const double to_rad = 3.1415926536 / 180;
 
 	lat1 = lat1 * to_rad;
@@ -82,6 +82,18 @@ double haversine_helper(double lat1, double lon1, double lat2, double lon2){
 	double y = (lat2 - lat1);
 	double result = sqrt(x * x + y * y) * R;
 	return result;
+}
+
+//versão do excel
+double haversine_helper_excel(double lat1, double lon1, double lat2, double lon2){
+	const double to_rad = 3.1415926536 / 180;
+	double x = cos((90-lat1)*to_rad);
+	double y = cos((90-lat2)*to_rad);
+	double z = sin((90-lat1)*to_rad);
+	double w = sin((90-lat2)*to_rad);
+	double p = cos((lon1-lon2)*to_rad);
+
+	return acos(x * y + z * w * p) *6371;
 }
 
 /** Distância entre os services */
@@ -120,7 +132,7 @@ double minimal_time_request(Request *rq){
 /*Tempo de viagem em minutos entre o ponto A e o ponto B*/
 double minimal_time_between_services(Service *a, Service *b){
 	double distance = haversine(a, b);
-	return distance / VEHICLE_SPEED * 60;
+	return ceil(distance / VEHICLE_SPEED * 60);
 }
 
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada
@@ -239,7 +251,7 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 bool is_tempo_respeitado(Rota *rota, int i, int j){
 	Service * source = &rota->list[i];
 	Service * destiny = &rota->list[j];
-	double MTT = AT + (BT * minimal_time_between_services(source, destiny));
+	double MTT = ceil(AT + (BT * minimal_time_between_services(source, destiny)));
 	double accTime = tempo_gasto_rota(rota, i, j);
 	return leq(accTime, MTT) && accTime >= 0;//Não é válido se o tempo acumulado for negativo
 }

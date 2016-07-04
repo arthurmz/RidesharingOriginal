@@ -73,10 +73,9 @@ int main(int argc,  char** argv){
 	Population * children = generate_random_population(POPULATION_SIZE, g, true);
 	evaluate_objective_functions_pop(parents, g);
 
-	//calculando o tempo mínimo de viagem dos motoristas
-	/*double drivers_total_time = 0;
+	/*
+	double drivers_total_time = 0;
 	double drivers_total_distance = 0;
-	double tempo_total_que_deve_dar_igual_ao_artigo = 0;
 	Individuo * idv = children->list[0];
 	for (int i = 0; i < idv->size; i++){
 		 Service *origem = &idv->cromossomo[i].list[0];
@@ -85,20 +84,11 @@ int main(int argc,  char** argv){
 		 drivers_total_time += min_time;
 		 double hav_temp = haversine(origem, destino);
 		 drivers_total_distance += hav_temp;
-		 double diff_tempo = destino->r->delivery_earliest_time - origem->r->pickup_earliest_time;
-		 double round_diff_tempo = round(diff_tempo * 10.0)/10.0;
-		 tempo_total_que_deve_dar_igual_ao_artigo += ceil(diff_tempo);
-		 char roundd = '+';
-		 if (diff_tempo - hav_temp < 0.001)
-			 roundd = ' ';
-		 else
-			 roundd = '+';
-		 printf("diff: %f rounddiff: %f hav_temp: %f %c\n",diff_tempo, round_diff_tempo, hav_temp, roundd);
 	}
 	printf("tempo total dos motoristas: %f\n", drivers_total_time);
 	printf("distância total dos motoristas: %f\n", drivers_total_distance);
-	printf("TEMPO Total que deve dar igual ao artigo %f\n", tempo_total_que_deve_dar_igual_ao_artigo);
-	//return 0;*/
+	return 0;
+	*/
 
 
 	int i = 0;

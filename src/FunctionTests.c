@@ -64,18 +64,17 @@ int mainbak(){
 
 }
 
-//TEste harversine
+
 int main_haversine(){
 
-	double longitude_a = -88.233519999999999;
-	double latitude_a = 41.79233;
+	double longitude_a = -88.13133;
+	double latitude_a = 42.11068;
 
-	double longitude_b = -87.98536;
-	double latitude_b = 41.708320000000001;
+	double longitude_b = -88.07178;
+	double latitude_b = 42.14213;
 
 	double result = haversine_helper(latitude_a, longitude_a, latitude_b, longitude_b);
 
-	printf("%f\n", result * 1.3);
+	printf("%f\n", result);
 	return 0;
 }
-
