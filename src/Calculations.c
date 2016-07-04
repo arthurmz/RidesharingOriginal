@@ -132,7 +132,7 @@ double minimal_time_request(Request *rq){
 /*Tempo de viagem em minutos entre o ponto A e o ponto B*/
 double minimal_time_between_services(Service *a, Service *b){
 	double distance = haversine(a, b);
-	return ceil(distance / VEHICLE_SPEED * 60);
+	return distance / VEHICLE_SPEED * 60;
 }
 
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada

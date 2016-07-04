@@ -150,10 +150,14 @@ void initialize_mem(Graph * g){
 	index_array_drivers_transfer_rider = malloc(g->drivers * sizeof(int));
 	index_array_drivers_mutation = malloc(g->drivers * sizeof(int));
 	index_array_caronas_inserir = malloc((g->riders + 2) * sizeof(int));
+	index_array_posicao_inicial = malloc((g->riders + 2) * sizeof(int));
+	index_array_offset = malloc((g->riders + 2) * sizeof(int));
 	fill_array(index_array_drivers, g->drivers);
 	fill_array(index_array_drivers_transfer_rider, g->drivers);
 	fill_array(index_array_drivers_mutation, g->drivers);
 	fill_array(index_array_caronas_inserir, g->riders + 2);
+	fill_array(index_array_posicao_inicial, g->riders + 2);
+	fill_array(index_array_offset, g->riders + 2);
 }
 
 void setup_matchable_riders(Graph * g){

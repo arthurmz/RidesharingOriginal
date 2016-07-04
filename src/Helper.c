@@ -232,6 +232,15 @@ void shuffle(int *array, int n) {
     }
 }
 
+//Preenche o vetor com 1,2,3.. e então aleatoriza a ordem até n
+//first: valor do primeiro elemento
+void fill_shuffle(int *array, int first, int n){
+	for (int i = 0; i < n; i++){
+		array[i] = first + i;
+	}
+	shuffle(array, n);
+}
+
 
 /*Desaloca a população, desalocando também os indivíduos*/
 void dealoc_full_population(Population *population){
