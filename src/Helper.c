@@ -50,8 +50,9 @@ Individuo * generate_random_individuo(Graph *g, bool insereCaronasAleatorias){
 		rota->length = 2;
 	}
 
-	if (insereCaronasAleatorias)
-		insere_carona_aleatoria_individuo(idv);
+	if (insereCaronasAleatorias){
+		insere_carona_aleatoria_individuo(idv, true);
+	}
 
 	return idv;
 }

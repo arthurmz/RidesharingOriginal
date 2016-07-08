@@ -104,7 +104,7 @@ typedef struct Graph{
 
 
 void malloc_rota_clone();
-void insere_carona_aleatoria_individuo(Individuo * ind);
+void insere_carona_aleatoria_individuo(Individuo * ind, bool full_search);
 void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void insere_carona_aleatoria_rota(Rota* rota, bool full_search);
@@ -114,7 +114,11 @@ void evaluate_objective_functions(Individuo *idv, Graph *g);
 void evaluate_objective_functions_pop(Population* p, Graph *g);
 void sort_by_objective(Population *pop, int obj);
 int compare_rotas(const void *p, const void *q);
+void push_forward_hard(Rota *rota, int position, double pushf);
+void push_forward_mutation_op(Rota * rota);
 bool push_forward(Rota * rota, int position, double pushf, bool forcar_clone);
+void push_backward_soft(Rota *rota, int position, int pushb);
+void push_backward_mutation_op(Rota * rota, int position);
 bool push_backward(Rota * rota, int position, double pushb, bool forcar_clone);
 bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g);
 bool remove_insert(Rota * rota);

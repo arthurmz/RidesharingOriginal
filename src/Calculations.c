@@ -176,6 +176,8 @@ inline double get_latest_time_service(Service * atual){
 bool is_dentro_janela_tempo_is_tempos_respeitados(Rota * rota){
 
 	for (int i = 0; i < rota->length-1; i++){
+		if (rota->list[i+1].service_time < rota->list[i].service_time)
+			return false;
 		Service *source = &rota->list[i];
 		if (!source->is_source) continue;
 		for (int j = i+1; j < rota->length; j++){
@@ -242,9 +244,13 @@ bool is_carga_dentro_limite2(Rota *rota){
 bool is_distancia_motorista_respeitada(Rota * rota){
 	Service * source = &rota->list[0];
 	Service * destiny = &rota->list[rota->length-1];
-	double MTD = AD + (BD * haversine(source, destiny));//Maximum Travel Distance
+	double MTD = ceil(AD + (BD * haversine(source, destiny)));//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
-	return leq(accDistance, MTD);
+	bool ok = leq(accDistance, MTD);
+	if (!ok){
+		is_tempo_respeitado(rota, 0, rota->length-1);
+	}
+	return ok;
 }
 
 /*Verifica se o tempo do request partindo do índice I e chegando no índice J é respeitado*/

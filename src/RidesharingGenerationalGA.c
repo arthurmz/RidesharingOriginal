@@ -69,7 +69,7 @@ int main(int argc,  char** argv){
 	/*=====================Início do NSGA-II============================================*/
 	clock_t tic = clock();
 	
-	Population * parents = generate_random_population(POPULATION_SIZE, g, true);
+	Population * parents = generate_random_population(POPULATION_SIZE, g, false);
 	Population * children = generate_random_population(POPULATION_SIZE, g, true);
 	evaluate_objective_functions_pop(parents, g);
 
