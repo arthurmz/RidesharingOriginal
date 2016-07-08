@@ -233,6 +233,14 @@ void shuffle(int *array, int n) {
     }
 }
 
+//Preenche o vetor com 1,2,3.. até n
+//first: valor do primeiro elemento
+void fill(int *array, int first, int n){
+	for (int i = 0; i < n; i++){
+		array[i] = first + i;
+	}
+}
+
 //Preenche o vetor com 1,2,3.. e então aleatoriza a ordem até n
 //first: valor do primeiro elemento
 void fill_shuffle(int *array, int first, int n){
@@ -241,6 +249,8 @@ void fill_shuffle(int *array, int first, int n){
 	}
 	shuffle(array, n);
 }
+
+
 
 
 /*Desaloca a população, desalocando também os indivíduos*/
@@ -332,13 +342,6 @@ void print_objective_function_evolution(int n_gen, double *obj_f){
 	}
 
 	fclose(fp);
-}
-
-/**Preenche o array sequencialmente*/
-void fill_array(int * array, int size){
-	for (int i = 0; i < size; i++){
-		array[i] = i;
-	}
 }
 
 /** Verifica se a rota está chegando no limite e aumente sua capacidade */

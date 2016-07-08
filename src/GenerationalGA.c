@@ -253,19 +253,20 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 				if(destiny->is_source || service->r != destiny->r)
 					continue;
 
-				rider_time += tempo_gasto_rota(rota, i, j);
-				if (rider_time < 0){
+				double rider_time_temp = tempo_gasto_rota(rota, i, j);
+				if (rider_time_temp < 0){
 					printf("negativo!");
 				}
+				rider_time += rider_time_temp;
 				break;
 			}
 		}
 	}
 
-	idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] = distance;
-	idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] = vehicle_time;
-	idv->objetivos[TOTAL_TIME_RIDER_TRIPS] = rider_time;
-	idv->objetivos[RIDERS_UNMATCHED] = riders_unmatched;
+	idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] = distance / (TOTAL_DISTANCE_VEHICLE_TRIP_UPPER_BOUND - TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND);
+	idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] = vehicle_time / (TOTAL_TIME_VEHICLE_TRIPS_UPPER_BOUND - TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND);
+	idv->objetivos[TOTAL_TIME_RIDER_TRIPS] = rider_time / (TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND - TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND);
+	idv->objetivos[RIDERS_UNMATCHED] = riders_unmatched / (RIDERS_UNMATCHED_UPPER_BOUND - RIDERS_UNMATCHED_LOWER_BOUND);
 
 	double alfa = 0.7;
 	double beta = 0.1;

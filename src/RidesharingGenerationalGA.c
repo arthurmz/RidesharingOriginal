@@ -90,6 +90,8 @@ int main(int argc,  char** argv){
 	return 0;
 	*/
 
+	evaluate_bounds(parents);
+
 
 	int i = 0;
 	while(i < ITERATIONS){
@@ -152,12 +154,12 @@ void initialize_mem(Graph * g){
 	index_array_caronas_inserir = malloc((g->riders + 2) * sizeof(int));
 	index_array_posicao_inicial = malloc((g->riders + 2) * sizeof(int));
 	index_array_offset = malloc((g->riders + 2) * sizeof(int));
-	fill_array(index_array_drivers, g->drivers);
-	fill_array(index_array_drivers_transfer_rider, g->drivers);
-	fill_array(index_array_drivers_mutation, g->drivers);
-	fill_array(index_array_caronas_inserir, g->riders + 2);
-	fill_array(index_array_posicao_inicial, g->riders + 2);
-	fill_array(index_array_offset, g->riders + 2);
+	fill(index_array_drivers,0, g->drivers);
+	fill(index_array_drivers_transfer_rider,0, g->drivers);
+	fill(index_array_drivers_mutation,0, g->drivers);
+	fill(index_array_caronas_inserir,0, g->riders + 2);
+	fill(index_array_posicao_inicial,0, g->riders + 2);
+	fill(index_array_offset,0, g->riders + 2);
 }
 
 void setup_matchable_riders(Graph * g){
@@ -180,6 +182,38 @@ void setup_matchable_riders(Graph * g){
 	}
 	//Ordenando o array de indices das rotas (por matchable_riders)
 	qsort(index_array_rotas, g->drivers, sizeof(Request*), compare_rotas );
+}
+
+/*
+ * Avalia os limites superiores e inferiores de:
+ * TOTAL_DISTANCE_VEHICLE_TRIP
+ * TOTAL_TIME_VEHICLE_TRIPS
+ * TOTAL_TIME_RIDER_TRIPS
+ * RIDERS_UNMATCHED
+ *
+ * Pop: Deve ser uma população sem caronas formadas
+ */
+void evaluate_bounds(Population * pop){
+	Individuo * idv = pop->list[0];
+	for (int i = 0; i < idv->size; i++){
+		 Service *origem = &idv->cromossomo[i].list[0];
+		 Service *destino = &idv->cromossomo[i].list[1];
+		 double haversineTemp = haversine(origem, destino);
+		 TOTAL_DISTANCE_VEHICLE_TRIP_UPPER_BOUND += AD + (BD * haversineTemp);
+		 TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND += haversineTemp;
+
+		 double tempoMinimo = minimal_time_between_services(origem, destino);
+		 TOTAL_TIME_VEHICLE_TRIPS_UPPER_BOUND += ceil(AT + (BT * tempoMinimo));
+		 TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND += tempoMinimo;
+	}
+
+	TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND = 6000;//TODO
+
+	TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND = 0;
+
+
+	RIDERS_UNMATCHED_UPPER_BOUND = g->riders;
+	RIDERS_UNMATCHED_LOWER_BOUND = 0;
 }
 
 
