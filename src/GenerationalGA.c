@@ -263,20 +263,20 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 		}
 	}
 
-	idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] = distance / (TOTAL_DISTANCE_VEHICLE_TRIP_UPPER_BOUND - TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND);
-	idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] = vehicle_time / (TOTAL_TIME_VEHICLE_TRIPS_UPPER_BOUND - TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND);
-	idv->objetivos[TOTAL_TIME_RIDER_TRIPS] = rider_time / (TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND - TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND);
-	idv->objetivos[RIDERS_UNMATCHED] = riders_unmatched / (RIDERS_UNMATCHED_UPPER_BOUND - RIDERS_UNMATCHED_LOWER_BOUND);
+	idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] = distance;
+	idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] = vehicle_time;
+	idv->objetivos[TOTAL_TIME_RIDER_TRIPS] = rider_time;
+	idv->objetivos[RIDERS_UNMATCHED] = riders_unmatched;
 
 	double alfa = 0.7;
 	double beta = 0.1;
 	double epsilon = 0.1;
 	double sigma = 0.1;
 	idv->objective_function =
-			(alfa * idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP])
-			+(beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS])
-			+(epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS])
-			+(sigma * idv->objetivos[RIDERS_UNMATCHED]);
+			(alfa * idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] / (TOTAL_DISTANCE_VEHICLE_TRIP_UPPER_BOUND - TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND))
+			+(beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] / (TOTAL_TIME_VEHICLE_TRIPS_UPPER_BOUND - TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND))
+			+(epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS] / (TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND - TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND))
+			+(sigma * idv->objetivos[RIDERS_UNMATCHED] / (RIDERS_UNMATCHED_UPPER_BOUND - RIDERS_UNMATCHED_LOWER_BOUND));
 
 }
 
