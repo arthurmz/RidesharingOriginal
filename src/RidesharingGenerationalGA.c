@@ -21,6 +21,7 @@
 void initialize_mem(Graph * g);
 void setup_matchable_riders(Graph * g);
 void print_qtd_matches_minima(Graph * g);
+void evaluate_bounds(Population *pop);
 
 /*Parametros: nome do arquivo
  *
