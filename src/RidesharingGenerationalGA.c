@@ -69,30 +69,11 @@ int main(int argc,  char** argv){
 
 	/*=====================Início do NSGA-II============================================*/
 	clock_t tic = clock();
-	
+
 	Population * parents = generate_random_population(POPULATION_SIZE, g, false);
 	Population * children = generate_random_population(POPULATION_SIZE, g, true);
-	evaluate_objective_functions_pop(parents, g);
-
-	/*
-	double drivers_total_time = 0;
-	double drivers_total_distance = 0;
-	Individuo * idv = children->list[0];
-	for (int i = 0; i < idv->size; i++){
-		 Service *origem = &idv->cromossomo[i].list[0];
-		 Service *destino = &idv->cromossomo[i].list[1];
-		 double min_time = minimal_time_between_services(origem, destino);
-		 drivers_total_time += min_time;
-		 double hav_temp = haversine(origem, destino);
-		 drivers_total_distance += hav_temp;
-	}
-	printf("tempo total dos motoristas: %f\n", drivers_total_time);
-	printf("distância total dos motoristas: %f\n", drivers_total_distance);
-	return 0;
-	*/
-
 	evaluate_bounds(parents);
-
+	evaluate_objective_functions_pop(parents, g);
 
 	int i = 0;
 	while(i < ITERATIONS){

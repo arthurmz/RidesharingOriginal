@@ -44,6 +44,6 @@ double OBJECTIVE_FUNCTION_LOWER_BOUND;
 
 const static int MAX_SERVICES_MALLOC_ROUTE = 60; //A quantidade de services alocados por rota
 
-const static int EPSILON = 0.00001;
+const static int EPSILON = 2;
 
 #endif /* STATICVARIABLES_H_ */
