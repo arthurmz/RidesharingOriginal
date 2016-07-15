@@ -32,7 +32,11 @@ double distancia_percorrida(Rota * rota){
 	for (int i = 0; i < rota->length -1; i++){
 		Service *a = &rota->list[i];
 		Service *b = &rota->list[i+1];
-		accDistance += haversine(a,b);
+		double distancia = haversine(a,b);
+		double tempoGastoRota = tempo_gasto_rota(rota, i, i+1);
+		if (distancia > tempoGastoRota)
+			distancia = tempoGastoRota;//Evita que os arredontamentos pra cima do haversine ultrapassem o tempo gasto da rota.
+		accDistance += distancia;
 	}
 
 	return accDistance;
@@ -247,9 +251,9 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 	double MTD = ceil(AD + (BD * haversine(source, destiny)));//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
 	bool ok = leq(accDistance, MTD);
-	if (!ok){
-		is_tempo_respeitado(rota, 0, rota->length-1);
-	}
+	//if (!ok){
+		//is_tempo_respeitado(rota, 0, rota->length-1);
+	//}
 	return ok;
 }
 

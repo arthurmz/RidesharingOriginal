@@ -73,7 +73,6 @@ int main(int argc,  char** argv){
 	Population * parents = generate_random_population(POPULATION_SIZE, g, false);
 	Population * children = generate_random_population(POPULATION_SIZE, g, true);
 	evaluate_bounds(parents);
-	evaluate_objective_functions_pop(parents, g);
 
 	int i = 0;
 	while(i < ITERATIONS){
@@ -119,8 +118,6 @@ int main(int argc,  char** argv){
 
 	dealoc_full_population(parents);
 	dealoc_full_population(children);
-	//dealoc_empty_population(big_population);
-	//dealoc_fronts(frontsList); :(
 	//dealoc_graph(g);
 	return EXIT_SUCCESS;
 }
@@ -189,11 +186,18 @@ void evaluate_bounds(Population * pop){
 		 TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND += tempoMinimo;
 	}
 
-	TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND = 6000;//TODO
+	for (int i = g->drivers; i < g->riders; i++){
+		Service x, y;
+		x.is_source = true;
+		x.offset = 1;
+		x.r = &g->request_list[i];
+		y.is_source = false;
+		y.offset = 0;
+		y.r = &g->request_list[i];
+		TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND += ceil(AT + (BT * minimal_time_between_services(&x, &y)));
+	}
 
 	TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND = 0;
-
-
 	RIDERS_UNMATCHED_UPPER_BOUND = g->riders;
 	RIDERS_UNMATCHED_LOWER_BOUND = 0;
 }

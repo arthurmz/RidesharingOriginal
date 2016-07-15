@@ -154,9 +154,9 @@ void insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 			Request * carona = request->matchable_riders_list[p];
 			if (!carona->matched){
 				bool inseriu = false;
-				fill_shuffle(index_array_posicao_inicial,1, rota->length);
+				fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
 				for (int pi = 1; pi < rota->length; pi++){
-					int posicao_inicial = index_array_posicao_inicial[pi];
+					int posicao_inicial = index_array_posicao_inicial[pi-1];
 					fill_shuffle(index_array_offset, 1, rota->length - posicao_inicial);
 					for (int ot = 1; ot <= rota->length - posicao_inicial; ot++){
 						int offset = index_array_offset[ot-1];
@@ -174,9 +174,9 @@ void insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 			Request * carona = request->matchable_riders_list[p];
 			if (!carona->matched){
 				bool inseriu = false;
-				fill_shuffle(index_array_posicao_inicial,1, rota->length);
+				fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
 				for (int pi = 1; pi < rota->length; pi++){
-					int posicao_inicial = index_array_posicao_inicial[pi];
+					int posicao_inicial = index_array_posicao_inicial[pi-1];
 					fill_shuffle(index_array_offset, 1, rota->length - posicao_inicial);
 					for (int ot = 1; ot <= rota->length - posicao_inicial; ot++){
 						int offset = index_array_offset[ot-1];
@@ -238,8 +238,10 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 	for (int m = 0; m < idv->size; m++){//pra cada rota
 		Rota *rota = &idv->cromossomo[m];
 
-		vehicle_time += tempo_gasto_rota(rota, 0, rota->length-1);
-		distance += distancia_percorrida(rota);
+		double vehicle_timeTemp = tempo_gasto_rota(rota, 0, rota->length-1);
+		double distanceTemp = distancia_percorrida(rota);
+		vehicle_time += vehicle_timeTemp;
+		distance += distanceTemp;
 
 		for (int i = 1; i < rota->length-2; i++){//Pra cada um dos sources services
 			Service *service = &rota->list[i];
@@ -273,10 +275,10 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 	double epsilon = 0.1;
 	double sigma = 0.1;
 	idv->objective_function =
-			(alfa * idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] / (TOTAL_DISTANCE_VEHICLE_TRIP_UPPER_BOUND - TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND))
-			+(beta * idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] / (TOTAL_TIME_VEHICLE_TRIPS_UPPER_BOUND - TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND))
-			+(epsilon * idv->objetivos[TOTAL_TIME_RIDER_TRIPS] / (TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND - TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND))
-			+(sigma * idv->objetivos[RIDERS_UNMATCHED] / (RIDERS_UNMATCHED_UPPER_BOUND - RIDERS_UNMATCHED_LOWER_BOUND));
+			(alfa * (idv->objetivos[TOTAL_DISTANCE_VEHICLE_TRIP] - TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND)  / (TOTAL_DISTANCE_VEHICLE_TRIP_UPPER_BOUND - TOTAL_DISTANCE_VEHICLE_TRIP_LOWER_BOUND))
+			+(beta * (idv->objetivos[TOTAL_TIME_VEHICLE_TRIPS] - TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND) / (TOTAL_TIME_VEHICLE_TRIPS_UPPER_BOUND - TOTAL_TIME_VEHICLE_TRIPS_LOWER_BOUND))
+			+(epsilon * (idv->objetivos[TOTAL_TIME_RIDER_TRIPS] - TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND) / (TOTAL_TIME_RIDER_TRIPS_UPPER_BOUND - TOTAL_TIME_RIDER_TRIPS_LOWER_BOUND))
+			+(sigma * (idv->objetivos[RIDERS_UNMATCHED] - RIDERS_UNMATCHED_LOWER_BOUND) / (RIDERS_UNMATCHED_UPPER_BOUND - RIDERS_UNMATCHED_LOWER_BOUND));
 
 }
 
@@ -712,23 +714,23 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 			int op = rand() % 5;
 			switch(op){
 				case (0):{
-					push_backward_mutation_op(rota,-1);
-					break;
-				}
-				case (1):{
-					push_forward_mutation_op(rota);
-					break;
-				}
-				case (2):{
 					remove_insert(rota);
 					break;
 				}
-				case (3):{
+				case (1):{
 					transfer_rider(rota,ind, g);
 					break;
 				}
-				case (4):{
+				case (2):{
 					swap_rider(rota);
+					break;
+				}
+				case (3):{
+					push_backward_mutation_op(rota,-1);
+					break;
+				}
+				case (4):{
+					push_forward_mutation_op(rota);
 					break;
 				}
 			}
