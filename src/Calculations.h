@@ -10,6 +10,7 @@
 
 #include "GenerationalGA.h"
 
+int qtd_caronas_combinados(Rota *rota);
 double distancia_percorrida(Rota * rota);
 double haversine(Service *a, Service *b);
 double haversine_helper(double lat1, double lon1, double lat2, double lon2);

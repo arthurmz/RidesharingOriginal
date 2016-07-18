@@ -112,10 +112,10 @@ void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset
  * Inserir_de_fato: útil para determinar se a rota acomoda o novo carona. se falso nada faz com o carona nem a rota.
  */
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
-	if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0 || posicao_insercao + offset > rota->length) {
-		printf("Parâmetros inválidos\n");
-		return false;
-	}
+	//if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0 || posicao_insercao + offset > rota->length) {
+	//	printf("Parâmetros inválidos\n");
+	//	return false;
+	//}
 
 	clone_rota(rota, &ROTA_CLONE);
 	bool isRotaValida = false;
@@ -144,7 +144,7 @@ void insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 	Request * request = &g->request_list[rota->id];
 
 	int qtd_caronas_inserir = request->matchable_riders;
-	if (qtd_caronas_inserir == 0) return;
+	if (qtd_caronas_inserir == 0 || qtd_caronas_combinados(rota) == qtd_caronas_inserir) return;
 	
 	fill_shuffle(index_array_caronas_inserir, 0, qtd_caronas_inserir);
 
@@ -153,13 +153,15 @@ void insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 			int p = index_array_caronas_inserir[z];
 			Request * carona = request->matchable_riders_list[p];
 			if (!carona->matched){
+				if (qtd_caronas_combinados(rota) == qtd_caronas_inserir)
+					return;
 				bool inseriu = false;
-				fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
-				for (int pi = 1; pi < rota->length; pi++){
-					int posicao_inicial = index_array_posicao_inicial[pi-1];
-					fill_shuffle(index_array_offset, 1, rota->length - posicao_inicial);
-					for (int ot = 1; ot <= rota->length - posicao_inicial; ot++){
-						int offset = index_array_offset[ot-1];
+				//fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
+				for (int posicao_inicial = 1; posicao_inicial < rota->length; posicao_inicial++){
+					//int posicao_inicial = index_array_posicao_inicial[pi-1];
+					//fill_shuffle(index_array_offset, 1, rota->length - posicao_inicial);
+					for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
+						//int offset = index_array_offset[ot-1];
 						inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
 						if(inseriu) break;
 					}
@@ -173,6 +175,8 @@ void insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 			int p = index_array_caronas_inserir[z];
 			Request * carona = request->matchable_riders_list[p];
 			if (!carona->matched){
+				if (qtd_caronas_combinados(rota) == qtd_caronas_inserir)
+					return;
 				bool inseriu = false;
 				fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
 				for (int pi = 1; pi < rota->length; pi++){
@@ -703,13 +707,13 @@ void repair(Individuo *offspring, Graph *g){
 
 void mutation(Individuo *ind, Graph *g, double mutationProbability){
 	repair(ind, g);
-	shuffle(index_array_drivers_mutation, g->drivers);
+	//shuffle(index_array_drivers_mutation, g->drivers);
 
 	for (int r = 0; r < ind->size; r++){
 		double accept = (double)rand() / RAND_MAX;
 		if (accept <0.4){
-			int k = index_array_drivers_mutation[r];
-			Rota * rota  = &ind->cromossomo[k];
+			//int k = index_array_drivers_mutation[r];
+			Rota * rota  = &ind->cromossomo[r];
 
 			int op = rand() % 5;
 			switch(op){

@@ -10,6 +10,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+inline int qtd_caronas_combinados(Rota *rota){
+	if (rota->length <= 2)
+		return 0;
+	return (rota->length - 2)/2;
+
+}
+
 /** Arredonda o número para 1 casa decimal */
 inline double round_2_decimal(double n){
 	return round(n * 10.0) / 10.0;
@@ -251,9 +258,6 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 	double MTD = ceil(AD + (BD * haversine(source, destiny)));//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
 	bool ok = leq(accDistance, MTD);
-	//if (!ok){
-		//is_tempo_respeitado(rota, 0, rota->length-1);
-	//}
 	return ok;
 }
 
