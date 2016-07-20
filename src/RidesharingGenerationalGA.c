@@ -153,7 +153,7 @@ void setup_matchable_riders(Graph * g){
 
 		for (int j = g->drivers; j < g->total_requests; j++){
 			Request * carona = &g->request_list[j];
-			if (insere_carona_rota(rota, carona, 1, 1, false) ){
+			if (insere_carona_rota(rota, carona, 1, 1, false)){
 				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
 				carona->matchable_riders_list[carona->matchable_riders++] = motoristaGrafo;
 			}

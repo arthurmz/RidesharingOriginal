@@ -78,39 +78,6 @@ void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset
 	}
 }
 
-
-/**Minha dúvida sobre esse operador é:
- * ele pega as posições de inserção P e seu offset, coloca na rota e
- * recalcula todo mundo à partir do horário de saída do motorista?
- * Pensando bem, o recálculo é desnecessário. já que
- * A+A- segue a idéia do recalculo total
- * A+1+1-A- vai ser inserido no seus tempos mais cedo
- * A+1+1-2+2-A-, A rota vai ficar igual de A+ até 1-, o resto que vai sofrer push forward.
- * Então a resposta é SIM, a operação de recalcular os tempos de todo mundo é equivalente à
- * calcular a rota parcialmente do ponto P pra frente!
- *
- * A forma que está escrito dá a enteder que primeiro o ponto de inserção é adicionado,
- * é feito o push forward, então o ponto de offset é adicionado.
- * Esse é um bom ponto de melhoria, pois se o push forward de P+1 for maior que o necessário,
- * a carona nesse canto podia ser válida e o algoritmo não pegou
- * Ex: vou inserir o ponto Px, entre P0 e P1, e meu offset é 1
- * PIOR QUE NÃO!!
- * A menor distância entre Px e P1 é uma linha reta, exatamente o valor do harversine
- * Então quando eu colocar o offset 1 entre Px e P1, P1 só pode sofrer um push forward >= 0, nunca MENOR.
- *
- * -------------------------------------------------------------------
- * O método de inserção do algoritmo original é o seguinte:
- * Em uma rota aleatória, e com uma carona aleatória a adicionar, determinamos o ponto P de inserção.
- * A idéia do operador de inserção original é de que a rota construída até o momento de
- * 1 até p-1 não deve ser alterada.
- * A hora de atendimento desse novo ponto P
- *
- * Rota: A rota para inserir.
- * Carona: A carona para inserir
- * Posicao_insercao: uma posição que deve estar numa posição válida
- * offset: distância do source pro destino. posicao_insercao+offset < rota->length
- * Inserir_de_fato: útil para determinar se a rota acomoda o novo carona. se falso nada faz com o carona nem a rota.
- */
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
 	//if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0 || posicao_insercao + offset > rota->length) {
 	//	printf("Parâmetros inválidos\n");
@@ -197,6 +164,7 @@ bool insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 			}
 		}
 	}
+	return false;
 }
 
 
@@ -248,10 +216,8 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 	for (int m = 0; m < idv->size; m++){//pra cada rota
 		Rota *rota = &idv->cromossomo[m];
 
-		double vehicle_timeTemp = tempo_gasto_rota(rota, 0, rota->length-1);
-		double distanceTemp = distancia_percorrida(rota);
-		vehicle_time += vehicle_timeTemp;
-		distance += distanceTemp;
+		vehicle_time += tempo_gasto_rota(rota, 0, rota->length-1);
+		distance += distancia_percorrida(rota);
 
 		for (int i = 1; i < rota->length-2; i++){//Pra cada um dos sources services
 			Service *service = &rota->list[i];
@@ -265,11 +231,10 @@ void evaluate_objective_functions(Individuo *idv, Graph *g){
 				if(destiny->is_source || service->r != destiny->r)
 					continue;
 
-				double rider_time_temp = tempo_gasto_rota(rota, i, j);
-				if (rider_time_temp < 0){
+				rider_time += tempo_gasto_rota(rota, i, j);
+				if (rider_time < 0){
 					printf("negativo!");
 				}
-				rider_time += rider_time_temp;
 				break;
 			}
 		}
@@ -370,7 +335,6 @@ void push_forward_mutation_op(Rota * rota){
 		clone_rota(ROTA_CLONE_PUSH, &rota);
 	}
 }
-
 
 /*Tenta empurar os services uma certa quantidade de tempo
  * retorna true se conseguiu fazer algum push forward
