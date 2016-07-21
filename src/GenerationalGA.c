@@ -682,7 +682,7 @@ void mutation(Individuo *ind, Graph *g, double mutationProbability){
 
 	for (int r = 0; r < ind->size; r++){
 		double accept = (double)rand() / RAND_MAX;
-		if (accept <0.4){
+		if (accept < mutationProbability){
 			//int k = index_array_drivers_mutation[r];
 			Rota * rota  = &ind->cromossomo[r];
 
