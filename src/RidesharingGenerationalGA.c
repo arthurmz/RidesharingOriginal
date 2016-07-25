@@ -153,7 +153,7 @@ void setup_matchable_riders(Graph * g){
 
 		for (int j = g->drivers; j < g->total_requests; j++){
 			Request * carona = &g->request_list[j];
-			if (insere_carona_rota(rota, carona, 1, 1, false)){
+			if (insere_carona_unica_rota(rota, carona, 1, 1, false)){
 				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
 				carona->matchable_riders_list[carona->matchable_riders++] = motoristaGrafo;
 			}
@@ -204,7 +204,9 @@ void evaluate_bounds(Population * pop){
 
 
 void print_qtd_matches_minima(Graph * g){
-	FILE *fp=fopen("qtd_matches_minima.txt", "w");
+	char buf[123];
+	sprintf(buf, "qtd_minima_matches_%d.txt", g->total_requests);
+	FILE *fp=fopen(buf, "w");
 	/*Imprimindo quantos caronas cada motorista consegue fazer match*/
 	int qtd = 0;
 	int motor_array[g->drivers];

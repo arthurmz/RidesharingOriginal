@@ -146,6 +146,24 @@ double minimal_time_between_services(Service *a, Service *b){
 	return distance / VEHICLE_SPEED * 60;
 }
 
+/*Diferença entre o service time e seu latest time*/
+double rem(Service *a){
+	double x, y;
+	if(a->is_source)
+		x = a->r->pickup_latest_time;
+	else
+		x = a->r->delivery_latest_time;
+
+	return x - a->service_time;
+}
+
+/*Calcula o tempo de espera entre dois services CONSECUTIVOS na rota.*/
+double waiting_time_services(Service *sv1, Service *sv2){
+	double tempo_gasto = sv2->service_time - sv1->service_time;
+	double mtbs = minimal_time_between_services(sv1,sv2);
+	return fmax(0, tempo_gasto - mtbs);
+}
+
 /*Calcula o tempo gasto para ir do ponto i ao ponto j, através de cada
  * request da rota.
  * Os tempos deve estar configurados corretamente nos services*/

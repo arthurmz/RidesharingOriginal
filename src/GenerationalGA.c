@@ -78,6 +78,51 @@ void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset
 	}
 }
 
+bool insere_carona_unica_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
+
+	clone_rota(rota, &ROTA_CLONE);
+	bool isRotaValida = false;
+	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
+	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
+	encaixando_carona(ROTA_CLONE);
+
+	isRotaValida = is_rota_valida(ROTA_CLONE);
+
+	if (isRotaValida && inserir_de_fato){
+		carona->matched = true;
+		carona->id_rota_match = ROTA_CLONE->id;
+		clone_rota(ROTA_CLONE, &rota);
+
+		increase_capacity(ROTA_CLONE);
+		increase_capacity(rota);
+	}
+
+	return isRotaValida;
+}
+
+/*mINIMIZANDO O TEMPO DE ESPERA QUANDO TIVER COLOCANDO O PRIMEIRO CARONA.*/
+void encaixando_carona(Rota *rota){
+	if(rota->length == 4){
+		/*Minimizar o tempo de espera quando está tentando adicionar um único carona à uma rota vazia.
+		 * Útil para garantir que, se um carona for encaixavel na rota, essa posição válida do encaixe vai ser encontrada.
+		 * Assim podemos contabilizar os riders combináveis de cada driver. Além de, no algoritmo melhorado, não depender de PF nem PB*/
+
+		Service * sv1 =  &rota->list[0];
+		Service * sv2 =  &rota->list[1];
+
+		double waitingTime = waiting_time_services(sv1, sv2);
+		double remainder = rem(sv1);
+		double push = fmin(remainder, waitingTime);
+
+		sv1->service_time += push;
+
+		/*NUNCA VAI TER TEMPO DE ESPERA ENTRE SV3 E SV4.
+		 * A rota original já seta as horas de pickup e delivery do motorista como as mais cedo.
+		 * QUALQUER carona adicionado faria a hora de delivery no minimo aumentar, nunca diminuir.
+		 */
+	}
+}
+
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
 	//if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0 || posicao_insercao + offset > rota->length) {
 	//	printf("Parâmetros inválidos\n");
@@ -88,6 +133,7 @@ bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int o
 	bool isRotaValida = false;
 	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
 	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
+	encaixando_carona(ROTA_CLONE);
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
 
@@ -609,7 +655,7 @@ bool remove_insert(Rota * rota){
 		return true;
 	}
 	else{
-		carona->matched = true;//POR QUE NUNCA ENTRA AQUI???????????
+		carona->matched = true;//POR QUE NUNCA ENTRA AQUI??????????? entra sim, seed 1467930051
 	}
 	return false;
 }

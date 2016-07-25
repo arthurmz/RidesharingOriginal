@@ -16,6 +16,8 @@ double haversine(Service *a, Service *b);
 double haversine_helper(double lat1, double lon1, double lat2, double lon2);
 double minimal_time_between_services(Service *a, Service *b);
 double minimal_time_request(Request *rq);
+double rem(Service *a);
+double waiting_time_services(Service *sv1, Service *sv2);
 double tempo_gasto_rota(Rota *rota, int i, int j);
 double calculate_service_time(Service * actual, Service *ant);
 bool is_dentro_janela_tempo_is_tempos_respeitados(Rota * rota);
