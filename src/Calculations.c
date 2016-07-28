@@ -273,7 +273,7 @@ bool is_carga_dentro_limite2(Rota *rota){
 bool is_distancia_motorista_respeitada(Rota * rota){
 	Service * source = &rota->list[0];
 	Service * destiny = &rota->list[rota->length-1];
-	double MTD = ceil(AD + (BD * haversine(source, destiny)));//Maximum Travel Distance
+	double MTD = AD + (BD * haversine(source, destiny));//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
 	bool ok = leq(accDistance, MTD);
 	return ok;
