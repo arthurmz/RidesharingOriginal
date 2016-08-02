@@ -108,6 +108,7 @@ void insere_carona_aleatoria_individuo(Individuo * ind, bool full_search);
 void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source);
 bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 bool insere_carona_aleatoria_rota(Rota* rota, bool full_search);
+bool insere_carona_unica_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
 void encaixando_carona(Rota *rota);
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);
