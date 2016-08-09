@@ -49,7 +49,7 @@ void insere_carona_aleatoria_individuo(Individuo * ind, bool full_search){
 
 //Insere a carona na rota e empura os tempos de pickup e delivery.
 //Completa a inserção mesmo se a rota ficar inválida
-void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source){
+bool insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source, int * insertFalso){
 	Service * ant = NULL;
 	Service * atual = NULL;
 	Service * next = NULL;
@@ -70,6 +70,12 @@ void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset
 	atual->offset = offset;
 	atual->service_time = calculate_service_time(atual, ant);
 
+	TIMEWINDOW *tw = get_time_windows_service(atual);
+	
+	if(atual->service_time > tw->b){
+		*insertFalso = 42;
+	}
+
 	nextTime = calculate_service_time(next, atual);
 	PF = nextTime - next->service_time;
 	rota->length++;//Deve aumentar o tamanho antes de fazer o PF
@@ -78,12 +84,12 @@ void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset
 	}
 }
 
-bool insere_carona_unica_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
+bool insere_carona_unica_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato, int *insercaoFalso){
 
 	clone_rota(rota, &ROTA_CLONE);
 	bool isRotaValida = false;
-	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
-	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
+	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true, insercaoFalso);
+	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false, insercaoFalso);
 	encaixando_carona(ROTA_CLONE);
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
@@ -123,16 +129,12 @@ void encaixando_carona(Rota *rota){
 	}
 }
 
-bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato){
-	//if (posicao_insercao <= 0 || posicao_insercao >= rota->length || offset <= 0 || posicao_insercao + offset > rota->length) {
-	//	printf("Parâmetros inválidos\n");
-	//	return false;
-	//}
+bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato, int *insercaoFalso){
 
 	clone_rota(rota, &ROTA_CLONE);
 	bool isRotaValida = false;
-	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true);
-	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false);
+	insere_carona(ROTA_CLONE, carona, posicao_insercao, offset, true, insercaoFalso);
+	insere_carona(ROTA_CLONE, carona, posicao_insercao+offset, 0, false, insercaoFalso);
 	encaixando_carona(ROTA_CLONE);
 
 	isRotaValida = is_rota_valida(ROTA_CLONE);
@@ -171,13 +173,17 @@ bool insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 				bool inseriu = false;
 				//fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
 				for (int posicao_inicial = 1; posicao_inicial < rota->length; posicao_inicial++){
+					int insercaoFalso = 0;
 					//int posicao_inicial = index_array_posicao_inicial[pi-1];
 					//fill_shuffle(index_array_offset, 1, rota->length - posicao_inicial);
 					for (int offset = 1; offset <= rota->length - posicao_inicial; offset++){
 						//int offset = index_array_offset[ot-1];
-						inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+						inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true, &insercaoFalso);
 						if(inseriu) {
 							ook = true;
+							break;
+						}
+						else if(insercaoFalso == 42){
 							break;
 						}
 					}
@@ -199,12 +205,14 @@ bool insere_carona_aleatoria_rota(Rota* rota, bool full_search){
 				bool inseriu = false;
 				fill_shuffle(index_array_posicao_inicial,1, rota->length-1);
 				for (int pi = 1; pi < rota->length; pi++){
+					int insercaoFalso = 0;
 					int posicao_inicial = index_array_posicao_inicial[pi-1];
 					fill_shuffle(index_array_offset, 1, rota->length - posicao_inicial);
 					for (int ot = 1; ot <= rota->length - posicao_inicial; ot++){
 						int offset = index_array_offset[ot-1];
-						inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true);
+						inseriu = insere_carona_rota(rota, carona, posicao_inicial, offset, true, &insercaoFalso);
 						if(inseriu) return true;
+						if(insercaoFalso == 42) break;
 					}
 				}
 			}
@@ -573,9 +581,10 @@ bool transfer_rider(Rota * rotaRemover, Individuo *ind, Graph * g){
 	caronaInserir->matched = false;
 
 	for (int posicaoInserir = 1; posicaoInserir < rotaInserir->length; posicaoInserir++){
+		int insereFalso = 0;
 		for (int offset = 1; offset <= rotaInserir->length - posicaoInserir; offset++){
-			conseguiu = insere_carona_rota(rotaInserir, caronaInserir, posicaoInserir, offset, true);
-			if(conseguiu) break;
+			conseguiu = insere_carona_rota(rotaInserir, caronaInserir, posicaoInserir, offset, true, &insereFalso);
+			if(conseguiu || insereFalso == 42) break;
 		}
 		if(conseguiu) break;
 	}

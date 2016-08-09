@@ -146,14 +146,14 @@ void setup_matchable_riders(Graph * g){
 	for (int i = 0; i < g->drivers; i++){
 		index_array_rotas[i] = &g->request_list[i];
 	}
-
+	int dummy = 0;//Apenas por segurança, não usar
 	for (int i = 0; i < g->drivers; i++){
 		Request * motoristaGrafo = individuoTeste->cromossomo[i].list[0].r;
 		Rota * rota = &individuoTeste->cromossomo[i];
 
 		for (int j = g->drivers; j < g->total_requests; j++){
 			Request * carona = &g->request_list[j];
-			if (insere_carona_unica_rota(rota, carona, 1, 1, false)){
+			if (insere_carona_unica_rota(rota, carona, 1, 1, false, &dummy)){
 				motoristaGrafo->matchable_riders_list[motoristaGrafo->matchable_riders++] = carona;
 				carona->matchable_riders_list[carona->matchable_riders++] = motoristaGrafo;
 			}

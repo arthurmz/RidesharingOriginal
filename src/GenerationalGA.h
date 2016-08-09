@@ -11,6 +11,13 @@
 #include <stdbool.h>
 #include "StaticVariables.h"
 
+
+typedef struct {
+	double a;
+	double b;
+} TIMEWINDOW;
+
+
 /*Driver or Rider*/
 typedef struct Request{
 	bool driver;//true -driver, false -rider
@@ -28,6 +35,9 @@ typedef struct Request{
 	double pickup_latest_time;
 	double delivery_earliest_time;
 	double delivery_latest_time;
+
+	TIMEWINDOW tw1;//pickup
+	TIMEWINDOW tw2;//delivery
 
 	/**Para o motorista: O número de riders que podem fazer match
 	 * Para o carona: O número de motoristas que podem fazer match
@@ -105,10 +115,10 @@ typedef struct Graph{
 
 void malloc_rota_clone();
 void insere_carona_aleatoria_individuo(Individuo * ind, bool full_search);
-void insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source);
-bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
+bool insere_carona(Rota *rota, Request *carona, int posicao_insercao, int offset, bool is_source, int * insertFalso);
+bool insere_carona_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato, int *insercaoFalso);
 bool insere_carona_aleatoria_rota(Rota* rota, bool full_search);
-bool insere_carona_unica_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato);
+bool insere_carona_unica_rota(Rota *rota, Request *carona, int posicao_insercao, int offset, bool inserir_de_fato, int *insercaoFalso);
 void encaixando_carona(Rota *rota);
 int desfaz_insercao_carona_rota(Rota *rota, int posicao_insercao);
 void clean_riders_matches(Graph *g);

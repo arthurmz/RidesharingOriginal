@@ -23,9 +23,9 @@ inline double round_2_decimal(double n){
 }
 
 //True se a <= b, com diferença < epsilon
-bool leq(double a, double b){
-	return a <= b || (a - b) < EPSILON;
-}
+//bool leq(double a, double b){
+//	return a <= b || (a - b) < EPSILON;
+//}
 
 /**Retorna um número inteiro entre minimum_number e maximum_number, inclusive */
 int get_random_int(int minimum_number, int max_number){
@@ -202,6 +202,16 @@ inline double get_latest_time_service(Service * atual){
 	return atual->r->delivery_latest_time;
 }
 
+
+inline TIMEWINDOW * get_time_windows_service(Service * atual){
+	if (atual->is_source){
+		return &atual->r->tw1;
+	}
+	else{
+		return &atual->r->tw2;
+	}
+}
+
 bool is_dentro_janela_tempo_is_tempos_respeitados(Rota * rota){
 
 	for (int i = 0; i < rota->length-1; i++){
@@ -214,8 +224,8 @@ bool is_dentro_janela_tempo_is_tempos_respeitados(Rota * rota){
 			if(destiny->is_source || source->r != destiny->r) continue;
 
 			//Janela de tempo
-			if ( ! ((leq(source->r->pickup_earliest_time, source->service_time) && leq(source->service_time, source->r->pickup_latest_time))
-				&& (leq(destiny->r->delivery_earliest_time, destiny->service_time) && leq(destiny->service_time, destiny->r->delivery_latest_time))))
+			if ( ! (source->r->pickup_earliest_time <= source->service_time && source->service_time <= source->r->pickup_latest_time
+				&& destiny->r->delivery_earliest_time <= destiny->service_time && destiny->service_time <= destiny->r->delivery_latest_time))
 				return false;
 
 			/*Verifica se os tempos de todos os requests nessa rota estão sendo respeitados*/
@@ -275,7 +285,7 @@ bool is_distancia_motorista_respeitada(Rota * rota){
 	Service * destiny = &rota->list[rota->length-1];
 	double MTD = AD + (BD * haversine(source, destiny));//Maximum Travel Distance
 	double accDistance = distancia_percorrida(rota);
-	bool ok = leq(accDistance, MTD);
+	bool ok = accDistance <= MTD;
 	return ok;
 }
 
@@ -285,7 +295,7 @@ bool is_tempo_respeitado(Rota *rota, int i, int j){
 	Service * destiny = &rota->list[j];
 	double MTT = ceil(AT + (BT * minimal_time_between_services(source, destiny)));
 	double accTime = tempo_gasto_rota(rota, i, j);
-	return leq(accTime, MTT) && accTime >= 0;//Não é válido se o tempo acumulado for negativo
+	return accTime <= MTT && accTime >= 0;//Não é válido se o tempo acumulado for negativo
 }
 
 /*Verifica se a ordem de inserção e remoção dos riders é respeitada

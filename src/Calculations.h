@@ -33,5 +33,7 @@ double get_latest_time_service(Service * atual);
 int get_random_int(int minimum_number, int max_number);
 double minimal_time_request(Request *rq);
 double round_2_decimal(double n);
+TIMEWINDOW * get_time_windows_service(Service * atual);
+
 
 #endif /* CALCULATIONS_H_ */

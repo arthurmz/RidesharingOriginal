@@ -209,6 +209,11 @@ Graph * parse_file(char *filename){
 		double minimal_time = minimal_time_request(rq);
 		rq->delivery_earliest_time = rq->pickup_earliest_time + minimal_time;
 		rq->delivery_latest_time = rq->pickup_latest_time + minimal_time;
+
+		rq->tw1.a = rq->pickup_earliest_time;
+		rq->tw1.b = rq->pickup_latest_time;
+		rq->tw2.a = rq->delivery_earliest_time;
+		rq->tw2.b = rq->delivery_latest_time;
 		if(rq->id < drivers)
 			rq->driver = true;
 		else
