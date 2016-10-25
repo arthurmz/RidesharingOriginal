@@ -38,3 +38,5 @@ espaco_decisao.txt
 *~
 *qtd_matches_minima.txt
 /Release/
+/Run/
+*.xml
