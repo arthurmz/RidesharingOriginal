@@ -205,7 +205,7 @@ void evaluate_bounds(Population * pop){
 
 void print_qtd_matches_minima(Graph * g){
 	char buf[123];
-	sprintf(buf, "qtd_minima_matches_%d.txt", g->total_requests);
+	sprintf(buf, "../Run/qtd_minima_matches_%d.txt", g->total_requests);
 	FILE *fp=fopen(buf, "w");
 	/*Imprimindo quantos caronas cada motorista consegue fazer match*/
 	int qtd = 0;
