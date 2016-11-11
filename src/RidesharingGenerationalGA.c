@@ -31,31 +31,39 @@ void evaluate_bounds(Population *pop);
  * Big_population - indivíduos NÃO alocados*/
 int main(int argc,  char** argv){
 
-	/*Setup======================================*/
-	if (argc < 4) {
-		printf("Argumentos insuficientes\n");
-		return 0;
-	}
-	unsigned int seed = time(NULL);
-	//Parametros (variáveis)
-	int POPULATION_SIZE;
-	int ITERATIONS;
-	int PRINT_ALL_GENERATIONS = 0;
-	int EVAL_EACH_GENERATION = 0;
+	char * filename;
+	int POPULATION_SIZE = 10;
 	double crossoverProbability = 0.95;
 	double mutationProbability = 0.1;
-	char *filename = argv[1];
+	int ITERATIONS = 10;
+	unsigned int seed = time(NULL);
 
-	sscanf(argv[2], "%d", &POPULATION_SIZE);
-	sscanf(argv[3], "%d", &ITERATIONS);
-	if (argc >= 5)
-		sscanf(argv[4], "%lf", &crossoverProbability);
-	if (argc >= 6)
-		sscanf(argv[5], "%lf", &mutationProbability);
-	if (argc >= 7)
-		sscanf(argv[6], "%d", &PRINT_ALL_GENERATIONS);
-	if (argc >= 8)
-		sscanf(argv[7], "%u", &seed);
+	for (int i = 1; i < argc; i++){
+		if (argv[i][0] == '-'){
+			if (argv[i][1] == 'i'){
+				filename = argv[++i];
+			}
+			else if (argv[i][1] == 'p'){
+				POPULATION_SIZE = atoi(argv[++i]);
+			}
+			else if (argv[i][1] == 'N'){
+				ITERATIONS = atoi(argv[++i]);
+			}
+			else if (argv[i][1] == 'c'){
+				crossoverProbability = atof(argv[++i]);
+			}
+			else if (argv[i][1] == 'm'){
+				mutationProbability = atof(argv[++i]);
+			}
+			else if (argv[i][1] == 's'){
+				seed = atoi(argv[++i]);
+			}
+		}
+	}
+
+	int PRINT_ALL_GENERATIONS = 0;
+	int EVAL_EACH_GENERATION = 0;
+
 	g = (Graph*)parse_file(filename);
 	if (g == NULL) return 0;
 
@@ -205,7 +213,7 @@ void evaluate_bounds(Population * pop){
 
 void print_qtd_matches_minima(Graph * g){
 	char buf[123];
-	sprintf(buf, "../Run/qtd_minima_matches_%d.txt", g->total_requests);
+	sprintf(buf, "qtd_minima_matches_%d.txt", g->total_requests);
 	FILE *fp=fopen(buf, "w");
 	/*Imprimindo quantos caronas cada motorista consegue fazer match*/
 	int qtd = 0;

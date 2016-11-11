@@ -1,1 +1,3 @@
-xfce4-terminal --hold -e "./Release/RidesharingOriginal.exe ../instances/RM698_L15.txt 100 100 1.0 0.4 0"
+xfce4-terminal --hold -e "./Release/RidesharingOriginal.exe -i ../instances/RM698_L15.txt -p 100 -N 100 -c 0.95 -m 0.1"
+
+
