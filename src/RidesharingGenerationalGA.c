@@ -39,7 +39,7 @@ int main(int argc,  char** argv){
 	unsigned int seed = time(NULL);
 
 	for (int i = 1; i < argc; i++){
-		if (argv[i][0] == '-'){
+		if (argv[i][0] == '-' && argv[++i][1] == '-'){
 			if (argv[i][1] == 'i'){
 				filename = argv[++i];
 			}
