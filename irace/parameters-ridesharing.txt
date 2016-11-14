@@ -2,7 +2,7 @@
 
 # name		switch		     type	values			[conditions (using R syntax)]
 
-population	"--p "		     i		(1, 300)
-niterat		"--N "		     i		(1, 300)
-crossoverp	"--c "		     r		(0.0, 1.0)
-mutationp	"--m "		     r		(0.0, 1.0)
+population	"-p "		     i		(1, 300)
+niterat		"-N "		     i		(1, 300)
+crossoverp	"-c "		     r		(0.0, 1.0)
+mutationp	"-m "		     r		(0.0, 1.0)

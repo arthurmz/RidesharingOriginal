@@ -37,9 +37,11 @@ int main(int argc,  char** argv){
 	double mutationProbability = 0.1;
 	int ITERATIONS = 10;
 	unsigned int seed = time(NULL);
+	//double time = 10;
+	int argsread = 0;
 
 	for (int i = 1; i < argc; i++){
-		if (argv[i][0] == '-' && argv[++i][1] == '-'){
+		if (argv[i][0] == '-'){
 			if (argv[i][1] == 'i'){
 				filename = argv[++i];
 			}
@@ -58,7 +60,16 @@ int main(int argc,  char** argv){
 			else if (argv[i][1] == 's'){
 				seed = atoi(argv[++i]);
 			}
+			//else if (argv[i][1] == 't'){
+				//time = atoi(argv[++i]);
+			//}
+			argsread++;
 		}
+	}
+
+	if (argsread < 1){
+		printf("Argumentos insuficientes\n");
+		return 0;
 	}
 
 	int PRINT_ALL_GENERATIONS = 0;
@@ -113,6 +124,9 @@ int main(int argc,  char** argv){
 	printf("Número de riders combinados: %f\n", g->riders - children->list[0]->objetivos[3]);
 	printf("Tempo decorrido: %f segundos\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 	printf("Seed: %u\n", seed);
+	//irace
+	printf("Best %f\n", g->riders - children->list[0]->objetivos[3]);
+
 	
 	if(!verifica_populacao(children)){
 		printf("ERRO!");
