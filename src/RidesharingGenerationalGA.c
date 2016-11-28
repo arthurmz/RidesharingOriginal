@@ -81,7 +81,7 @@ int main(int argc,  char** argv){
 	srand (seed);
 	initialize_mem(g);
 	setup_matchable_riders(g);
-	print_qtd_matches_minima(g);
+	//print_qtd_matches_minima(g);
 	double objective_function_per_gen[ITERATIONS];
 	printf("Seed: %u\n", seed);
 
